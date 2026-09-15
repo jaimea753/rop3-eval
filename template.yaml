@@ -1,0 +1,60 @@
+# ---------------------------------------------------------------------------
+# run-experiments.py scan configuration -- REFERENCE TEMPLATE
+#
+# Copy this file, adjust the values, and pass it with `--config <file>`
+# (required). Every command-line option overrides the value here; anything
+# omitted falls back to the built-in default.
+# ---------------------------------------------------------------------------
+
+# Libraries to analyse. A folder (scanned for *.so*/*.dylib/*.dll/*_bin, with
+# each subfolder treated as one bundle), a single file, a glob, or a list
+# mixing any of those.
+libraries: binaries/libc
+# libraries:
+#   - examples/libc_debian_x86.so
+#   - examples/libc_debian_amd64.so
+#   - examples/libc_debian_aarch64.so
+#   - examples/libc_debian_riscv64.so
+
+# Experiment mode: 'ops' (per-operation gadget counts), 'presence' (architecture
+# x operation matrix), or 'ropchains' (requires `ropchains`). Equivalent to the
+# --presence / --ropchains flags.
+mode: ops
+
+# Search for JOP gadgets instead of ROP.
+jop: false
+ropblock: false
+
+# Directory of ropchain files (.rop / .txt); only used by mode: ropchains.
+ropchains: null
+
+# Parallelism.
+workers: 4
+sequential: false
+
+# Search depth in BYTES, per architecture. Keys: x86, x86_64, aarch64, riscv64
+# (plus 'default' for any arch not listed). A value of null means "use the
+# architecture's own built-in default". A command-line --depth overrides every
+# architecture. Fixed-width ISAs need a larger window than x86 to fit a gadget.
+depth:
+  default: null
+  x86:     10
+  x86_64:  10
+  aarch64: 24
+  riscv64: 24
+
+# Flags passed straight to the Rop3() API constructor.
+rop3_flags:
+  ret_imm:            true
+  reg_aliases:        true
+  keep_contradictory: true
+  avoid_canary:       false
+  framed:             true
+  all:                false
+  allow_undeterministic: false
+  allow_complex_mem:  false
+
+# Operations to probe (optional; omit to use the built-in lists).
+operations:
+  rop: [add, sub, neg, mov, lc, ld, st, xor, and, or, not, eqc, ltc, spa, sps, jmp, gsp]
+  jop: [add, sub, neg, mov, lc, ld, st, xor, and, or, not, eqc, ltc, spa, sps, gsp]

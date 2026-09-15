@@ -1,0 +1,108 @@
+# URLs / commands and extraction paths for libc_downloaders.py.
+# Each entry has an `out` (file or bundle folder) produced either by:
+#   - `url` + `extract`: download and pull the member path(s) out (nested
+#     archives list the outer member first); or
+#   - `command`: a shell command that extracts the binary locally.
+# An optional `sha256` (a hash, or a filename->hash map for a bundle) is
+# checked after producing the output; a mismatch only warns.
+downloads:
+  - out: debian_amd64_libc.so
+    url: https://snapshot.debian.org/archive/debian/20251201T030959Z/pool/main/g/glibc/libc6_2.41-12_amd64.deb
+    extract: [data.tar, usr/lib/x86_64-linux-gnu/libc.so.6]
+    sha256: 56e42210fbaee005355b622121fec8b0c16ca80837eddce3e3557075103dda78
+  - out: debian_i386_libc.so
+    url: https://snapshot.debian.org/archive/debian/20251201T030959Z/pool/main/g/glibc/libc6_2.41-12_i386.deb
+    extract: [data.tar, usr/lib/i386-linux-gnu/libc.so.6]
+    sha256: 1b1389ca98e6f513d6e3c58f0b98a0702104f9ea27a6f46eb071ca286bb541cd
+
+  - out: ubuntu_amd64_libc.so
+    url: https://launchpad.net/ubuntu/+archive/primary/+files/libc6_2.39-0ubuntu8.6_amd64.deb
+    extract: [data.tar, usr/lib/x86_64-linux-gnu/libc.so.6]
+    sha256: 511f825ee075610ac9c0f7f91e2c13de2000d0f7b859f6461137e809a0a009d0
+  - out: ubuntu_i386_libc.so
+    url: https://launchpad.net/ubuntu/+archive/primary/+files/libc6_2.39-0ubuntu8.6_i386.deb
+    extract: [data.tar, usr/lib/i386-linux-gnu/libc.so.6]
+    sha256: 405fbcfb7fd8516e057f1015c10cf67ccf667caf67970afaa70fb098ec87562c
+
+  - out: archlinux_amd64_libc.so
+    url: https://archive.archlinux.org/packages/g/glibc/glibc-2.42%2Br33%2Bgde1fe81f4714-1-x86_64.pkg.tar.zst
+    extract: [usr/lib/libc.so.6]
+    sha256: d160b7ae4621987092cb730aef3c8bc0ba3076a4d9dd40ee3e14570121412e3c
+
+  - out: fedora43_amd64_libc.so
+    url: https://kojipkgs.fedoraproject.org//packages/glibc/2.42/4.fc43/x86_64/glibc-2.42-4.fc43.x86_64.rpm
+    extract: [usr/lib64/libc.so.6]
+    sha256: 40e82c7fafb0bd25f5dd599b074e26694df2e6081426f3a740ff54126fd739fb
+  - out: fedora43_i386_libc.so
+    url: https://kojipkgs.fedoraproject.org/packages/glibc/2.42/4.fc43/i686/glibc-2.42-4.fc43.i686.rpm
+    extract: [usr/lib/libc.so.6]
+    sha256: 8ea4685184bdd16f5ab70ef2012df83689b5e0f72a9ef64c4e1e2a3e312be69d
+
+  - out: void_glibc_amd64_libc.so
+    url: https://repo-fi.voidlinux.org/current/glibc-2.41_1.x86_64.xbps
+    extract: [usr/lib/libc.so.6]
+    sha256: 1b7f483ef43aa79955999748b05acf7f489611dd635be5cb106fdddb5c5c337e
+  - out: void_glibc_i386_libc.so
+    url: https://repo-fi.voidlinux.org/current/glibc-2.41_1.i686.xbps
+    extract: [usr/lib/libc.so.6]
+    sha256: d81899eedbad8232e12d6790479c74d446b62bdcacbb5b202fea9e2a11b00e87
+  - out: void_musl_amd64_libc.so
+    url: https://repo-fi.voidlinux.org/current/musl-bootstrap-1.2.5_1.x86_64.xbps
+    extract: [usr/lib/musl/lib/libc.so]
+  - out: void_musl_i386_libc.so
+    url: https://repo-fi.voidlinux.org/current/musl-bootstrap-1.2.5_1.i686.xbps
+    extract: [usr/lib/musl/lib/libc.so]
+
+  - out: slackware_amd64_libc.so
+    url: https://mirrors.slackware.com/slackware/slackware64-15.0/patches/packages/glibc-2.33-x86_64-9_slack15.0.txz
+    extract: [lib64/incoming/libc-2.33.so]
+    sha256: 7987843db010ed19d6ab149f1f4ac687fcbd29a450997418f212749ffe4e0016
+  - out: slackware_i386_libc.so
+    url: https://mirrors.slackware.com/slackware/slackware-15.0/patches/packages/glibc-2.33-i586-9_slack15.0.txz
+    extract: [lib/incoming/libc-2.33.so]
+    sha256: 5598054c0ac34123daa9f34411687c1ed406a44e8fdad6216e16fbf01f0ae0b1
+
+  - out: freebsd_amd64_libc.so
+    url: https://archive.freebsd.org/old-releases/amd64/14.3-RELEASE/base.txz
+    extract: [lib/libc.so.7]
+    sha256: e63f83736ce65a22400878b7bced916fdce486ecca713bea80b6958595b9306c
+  - out: freebsd_i386_libc.so
+    url: https://archive.freebsd.org/old-releases/i386/14.3-RELEASE/base.txz
+    extract: [lib/libc.so.7]
+    sha256: 37ed97e913cac32dfbcc4c0182538a3e6aaa4d46ff8627987e15ff00c513f18a
+
+  - out: openbsd_amd64_libc.so
+    url: https://cdn.openbsd.org/pub/OpenBSD/7.8/amd64/base78.tgz
+    extract: [usr/lib/libc.so.102.0]
+    sha256: efa8971633d3800f4220c567f9c069cabf3bc5434f4470f0af5ac99350b22cd3
+  - out: openbsd_i386_libc.so
+    url: https://cdn.openbsd.org/pub/OpenBSD/7.8/i386/base78.tgz
+    extract: [usr/lib/libc.so.102.0]
+    sha256: 061bfd230cd81fd440bf4c28c17a16981fcc7353de94174048fe7aafb66ebb20
+
+  - out: netbsd_amd64_libc.so
+    url: https://cdn.netbsd.org/pub/NetBSD/NetBSD-10.1/amd64/binary/sets/base.tar.xz
+    extract: [lib/libc.so.12.220.1]
+    sha256: 6bcb82b18c0cb63d2b32a45744ca1d2b39f7a841642ccf0c97e59554c64279a1
+  - out: netbsd_i386_libc.so
+    url: https://cdn.netbsd.org/pub/NetBSD/NetBSD-10.1/i386/binary/sets/base.tgz
+    extract: [lib/libc.so.12.220.1]
+    sha256: 788e5deffff47c2d2477d20a5a33cae9abd5c3005708ffc6406889add306e036
+
+  # macOS libc lives in the dyld shared cache; extract it locally with ipsw
+  # (needs macOS Sonoma). `platform` gates the command to that OS.
+  - out: macos_amd64_libc
+    platform: Darwin
+    command: |
+      brew install ipsw
+      cache=/System/Volumes/Preboot/Cryptexes/OS/System/Library/dyld/dyld_shared_cache_x86_64h
+      for lib in libsystem_c libsystem_kernel libsystem_malloc libsystem_pthread; do
+          ipsw dyld extract "$cache" /usr/lib/system/$lib.dylib --output macos_amd64_libc/extract
+          find macos_amd64_libc/extract -name "$lib.dylib" -exec cp {} macos_amd64_libc/$lib.dylib \;
+      done
+      rm -rf macos_amd64_libc/extract
+    sha256:
+      libsystem_c.dylib: b23df232e21f16bdfae46f02ed52af886475b243db2fe1b29ac1391c1d69a286
+      libsystem_kernel.dylib: 3d24eb4febcd92b1fe9882944092c9cf021896d6ca7fa9f596bf821d3e8ad609
+      libsystem_malloc.dylib: f85ac746106fe13b830a51b68d639f21b66f0b8c2f2409feb2384c5bd737785e
+      libsystem_pthread.dylib: 94166314a6c44acc30598c89b1e9eddd54b45b383a3161eecc74cf778d24ea5b

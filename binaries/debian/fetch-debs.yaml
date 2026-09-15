@@ -1,0 +1,86 @@
+# ---------------------------------------------------------------------------
+# fetch-debs.py configuration
+#
+# Downloads library/executable binaries out of Debian packages, straight from
+# snapshot.debian.org, so a given config always produces byte-for-byte
+# identical outputs. Run with:  python fetch-debs.py --config fetch-debs.yaml
+# ---------------------------------------------------------------------------
+
+# The snapshot to pin every download to (a single value => full reproducibility).
+# Format is a snapshot.debian.org timestamp; browse https://snapshot.debian.org/
+# to pick one. This value alone fixes the exact package versions fetched below.
+snapshot: "20240101T000000Z"
+
+# Where extracted binaries land. Each file is written to <output>/<arch>/ and
+# named by the `naming:` template below, so every binary is tagged by both the
+# package name and the architecture. A manifest.json is written at the root.
+output: ./binaries
+
+# Output filename template. Placeholders: {name} (package), {arch} (the tag as
+# written under `architectures:`), {deb_arch} (i386/amd64/arm64/riscv64),
+# {basename}, {stem}, {ext}. Override per-binary with a `name:` (see below).
+naming: "{name}_{arch}_{basename}"
+
+# Architectures to fetch. The task's four are all supported; aliases in
+# parentheses also work. The token you write here is the tag used on disk.
+#   x86     (i386, x86_32)        -> Debian i386
+#   amd64   (x86_64, x64)         -> Debian amd64
+#   aarch64 (arm64)               -> Debian arm64
+#   riscv   (riscv64, rv64)       -> Debian riscv64  [debian-ports archive]
+architectures:
+  - x86
+  - amd64
+  - aarch64
+  - riscv
+
+# Suite + component the Packages index is read from (defaults shown). `sid`
+# (unstable) is the widest. riscv64 also falls back to the ports `unreleased`
+# suite automatically.
+suite: sid
+component: main
+
+# Optional per-architecture overrides for the archive / suite search order.
+# Defaults are fine for the four arches above; shown here for reference.
+# arch_options:
+#   riscv:
+#     archive: debian-ports
+#     suites: [sid, unreleased]
+
+# The packages to pull from. Each entry is a unique Debian package `name:` and
+# the `binaries:` (paths inside the package) to extract. A path may be:
+#   * an exact path              usr/bin/ls
+#   * a glob (``*`` crosses /)   */libc.so.6      (handles per-arch lib dirs)
+#   * a bare basename            libc.so.6        (matched anywhere in the .deb)
+#   * a {path:, name:} mapping   to force the output filename
+# In-package symlinks are followed, so libc.so.6 yields the real libc bytes.
+packages:
+  # A shared library. The arch-specific dir (x86_64-linux-gnu, aarch64-linux-gnu,
+  # riscv64-linux-gnu, i386-linux-gnu) is matched by the leading glob. `name:`
+  # forces the classic examples/ naming used by run-experiments.py.
+  - name: libc6
+    binaries:
+      - path: "*/libc.so.6"
+        name: "libc_debian_{arch}.so"   # note: {arch} is filled in by fetch-debs
+
+  # A couple of executables from coreutils. Bare basenames match the binary
+  # wherever the package puts it (/bin vs /usr/bin varies across snapshots by
+  # usr-merge state), so these survive that churn.
+  - name: coreutils
+    binaries:
+      - ls
+      - cat
+
+  # Another library, matched by basename only.
+  - name: zlib1g
+    binaries:
+      - libz.so.1
+
+  - name: firefox-esr
+    binaries:
+      - path: "usr/lib/firefox-esr/libxul.so"
+        name: "libxul_debian_{arch}.so"
+
+  - name: libreoffice-core
+    binaries:
+      - path: "usr/lib/libreoffice/program/libmergedlo.so"
+        name: "libmergedlo_debian_{arch}.so"

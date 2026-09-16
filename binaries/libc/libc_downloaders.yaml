@@ -47,11 +47,13 @@ downloads:
     extract: [usr/lib/libc.so.6]
     sha256: d81899eedbad8232e12d6790479c74d446b62bdcacbb5b202fea9e2a11b00e87
   - out: void_musl_amd64_libc.so
-    url: https://repo-fi.voidlinux.org/current/musl-bootstrap-1.2.5_1.x86_64.xbps
+    url: https://repo-fi.voidlinux.org/current/musl-bootstrap-1.2.6_1.x86_64.xbps
     extract: [usr/lib/musl/lib/libc.so]
+    sha256: d449053c3b234b78e0e2bdf9c7dda62c903753b71d3f1b58a700f2d643bf2dbb
   - out: void_musl_i386_libc.so
-    url: https://repo-fi.voidlinux.org/current/musl-bootstrap-1.2.5_1.i686.xbps
+    url: https://repo-fi.voidlinux.org/current/musl-bootstrap-1.2.6_1.i686.xbps
     extract: [usr/lib/musl/lib/libc.so]
+    sha256: 7b82d5daacd52fcb7f0973613c534dfab3125a0b6386391cb79858cbedaf0c71
 
   - out: slackware_amd64_libc.so
     url: https://mirrors.slackware.com/slackware/slackware64-15.0/patches/packages/glibc-2.33-x86_64-9_slack15.0.txz

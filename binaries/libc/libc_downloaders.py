@@ -74,26 +74,29 @@ def verify(task):
 
 def produce(task):
     out_path = os.path.join(HERE, task["out"])
-    if os.path.exists(out_path):
-        print(f"Skipping {task['out']} (already present)")
-    elif "command" in task:
-        # Command tasks are OS-specific (macOS Sonoma for the dyld cache).
-        need = task.get("platform")
-        if need and platform.system() != need:
-            print(f"WARNING: skipping {task['out']}: needs {need}, "
-                  f"this is {platform.system()}")
-            return
-        subprocess.run(task["command"], shell=True, cwd=HERE)
-        print(f"Extracted {task['out']}")
-    else:
-        blob = extract(fetch(task["url"]), task["extract"])
-        if blob is None:
-            print(f"Failed {task['out']}")
-            return
-        with open(out_path, "wb") as out:
-            out.write(blob)
-        print(f"Downloaded {task['out']}")
-    verify(task)
+    try:
+        if os.path.exists(out_path):
+            print(f"Skipping {task['out']} (already present)")
+        elif "command" in task:
+            # Command tasks are OS-specific (macOS Sonoma for the dyld cache).
+            need = task.get("platform")
+            if need and platform.system() != need:
+                print(f"WARNING: skipping {task['out']}: needs {need}, "
+                      f"this is {platform.system()}")
+                return
+            subprocess.run(task["command"], shell=True, cwd=HERE)
+            print(f"Extracted {task['out']}")
+        else:
+            blob = extract(fetch(task["url"]), task["extract"])
+            if blob is None:
+                print(f"Failed {task['out']}")
+                return
+            with open(out_path, "wb") as out:
+                out.write(blob)
+            print(f"Downloaded {task['out']}")
+        verify(task)
+    except Exception as exc:
+        print(f"ERROR {task['out']}: {exc}")
 
 
 def clean():
@@ -110,4 +113,4 @@ if __name__ == "__main__":
     with open(CONFIG) as config:
         tasks = yaml.safe_load(config)["downloads"]
     with ThreadPoolExecutor(max_workers=len(tasks)) as pool:
-        pool.map(produce, tasks)
+        list(pool.map(produce, tasks))

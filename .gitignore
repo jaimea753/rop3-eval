@@ -1,3 +1,5 @@
 **/__pycache__
 *.tsv
 *.pdf
+!results/**/*.tsv
+_site/

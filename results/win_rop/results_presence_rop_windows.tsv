@@ -1,0 +1,52 @@
+library	arch	add	sub	neg	mov	lc	ld	st	xor	and	or	not	eqc	ltc	spa	sps	jmp	gsp
+ntdll_amd64.dll	x86-64	33	7	7	61	342	65	130	5	15	2	1	6	7	0	0	23	0
+sechost_aarch64.dll	AArch64 (ARM64)	22	2	0	49	38	59	75	0	0	0	2	0	1	0	0	0	0
+msvcrt_amd64.dll	x86-64	22	2	5	35	146	27	23	1	3	2	0	0	2	0	0	18	0
+oleaut32_x86.dll	x86	45	11	2	154	134	22	94	43	5	13	0	0	6	0	0	56	0
+sechost_x86.dll	x86	25	4	2	100	102	11	78	26	4	12	1	0	2	0	0	30	0
+advapi32_aarch64.dll	AArch64 (ARM64)	7	1	0	37	41	46	43	0	0	0	1	0	0	0	0	0	0
+gdi32full_amd64.dll	x86-64	17	2	1	29	196	31	33	0	1	0	0	0	2	0	0	6	0
+advapi32_amd64.dll	x86-64	12	1	0	26	167	26	23	1	1	0	0	0	1	0	0	4	0
+combase_aarch64.dll	AArch64 (ARM64)	210	6	0	154	82	291	351	2	0	4	0	0	4	0	0	0	0
+msvcrt_aarch64.dll	AArch64 (ARM64)	42	8	0	63	51	75	65	2	3	1	1	0	1	0	0	0	0
+ucrtbase_aarch64.dll	AArch64 (ARM64)	85	11	0	107	62	102	119	4	1	5	0	0	4	0	0	0	0
+gdi32_x86.dll	x86	6	1	0	33	50	6	13	13	1	22	0	0	1	0	0	6	0
+ws2_32_amd64.dll	x86-64	13	1	0	26	129	13	25	1	1	0	0	0	1	0	0	5	0
+gdi32full_x86.dll	x86	35	9	6	113	151	17	90	40	7	17	0	12	5	0	0	49	0
+ole32_x86.dll	x86	52	5	2	167	182	48	179	49	9	29	0	0	4	1	1	12	0
+sechost_amd64.dll	x86-64	15	2	0	38	157	29	51	2	0	1	0	0	2	0	0	3	0
+kernel32_aarch64.dll	AArch64 (ARM64)	10	4	0	48	61	87	42	1	0	0	2	0	2	0	0	0	0
+ws2_32_aarch64.dll	AArch64 (ARM64)	17	1	0	33	34	48	15	0	0	3	0	0	0	0	0	0	0
+advapi32_x86.dll	x86	27	0	3	85	103	8	59	26	7	14	0	0	0	0	0	20	0
+oleaut32_amd64.dll	x86-64	16	4	0	34	161	26	79	3	2	0	0	0	4	0	0	8	0
+win32u_x86.dll	x86	3	1	0	1	2	1	0	4	0	0	0	0	1	0	0	0	0
+ucrtbase_amd64.dll	x86-64	28	2	2	55	217	41	100	4	8	5	0	1	2	0	0	23	0
+ole32_aarch64.dll	AArch64 (ARM64)	211	4	0	83	60	126	152	0	0	3	0	0	2	0	0	0	0
+gdi32_amd64.dll	x86-64	9	0	0	12	59	4	4	1	0	0	0	0	0	0	0	0	0
+shell32_amd64.dll	x86-64	33	2	1	96	376	65	322	5	5	3	0	0	2	0	0	72	0
+shell32_x86.dll	x86	303	50	8	866	770	87	683	113	59	89	3	20	21	6	1	1825	5
+shlwapi_amd64.dll	x86-64	11	0	0	33	117	11	25	0	2	0	0	0	0	0	0	3	0
+gdi32_aarch64.dll	AArch64 (ARM64)	4	0	0	16	11	11	6	0	0	0	1	0	0	0	0	0	0
+oleaut32_aarch64.dll	AArch64 (ARM64)	90	5	0	39	47	92	108	0	0	3	0	0	2	0	0	0	0
+ucrtbase_x86.dll	x86	187	33	6	372	352	96	209	70	47	79	0	22	16	0	0	222	2
+ntdll_x86.dll	x86	114	34	3	289	279	61	228	65	36	49	3	13	21	3	1	190	1
+rpcrt4_amd64.dll	x86-64	18	0	0	40	224	50	100	0	1	1	0	0	0	0	0	11	0
+rpcrt4_x86.dll	x86	48	3	5	159	159	73	164	31	5	15	0	0	1	0	0	52	2
+win32u_aarch64.dll	AArch64 (ARM64)	1	0	0	6	0	1	0	0	0	0	0	0	0	0	0	0	0
+kernel32_amd64.dll	x86-64	15	1	0	37	157	27	29	0	1	1	0	0	1	0	0	7	0
+gdi32full_aarch64.dll	AArch64 (ARM64)	75	4	0	59	47	75	77	3	0	3	0	0	2	0	0	0	0
+ntdll_aarch64.dll	AArch64 (ARM64)	57	16	1	132	112	201	206	5	9	4	1	1	6	0	0	0	1
+combase_x86.dll	x86	110	19	3	401	286	77	350	87	150	74	0	7	8	0	0	435	3
+shlwapi_x86.dll	x86	18	1	0	76	90	4	66	19	8	15	0	0	1	0	0	25	0
+kernel32_x86.dll	x86	38	2	1	86	107	22	70	25	11	13	1	1	2	0	0	14	1
+user32_amd64.dll	x86-64	27	0	0	44	170	29	29	1	0	0	0	0	0	0	0	7	0
+rpcrt4_aarch64.dll	AArch64 (ARM64)	58	2	0	58	65	181	154	0	0	0	1	0	0	0	0	0	0
+user32_x86.dll	x86	51	12	3	322	134	50	123	32	25	138	1	3	7	0	0	60	0
+msvcrt_x86.dll	x86	154	23	5	242	269	87	130	44	22	57	1	24	13	1	0	110	0
+combase_amd64.dll	x86-64	23	1	0	72	273	83	234	3	6	1	0	0	0	0	0	14	0
+win32u_amd64.dll	x86-64	2	0	0	0	0	1	0	0	0	0	0	0	0	0	0	0	0
+ws2_32_x86.dll	x86	15	3	3	95	112	12	53	22	5	10	0	0	1	0	0	10	0
+shlwapi_aarch64.dll	AArch64 (ARM64)	31	3	0	41	28	31	67	0	0	3	0	0	2	0	0	0	0
+shell32_aarch64.dll	AArch64 (ARM64)	988	12	0	212	109	399	403	0	1	5	0	0	4	0	0	0	1
+user32_aarch64.dll	AArch64 (ARM64)	15	3	0	70	45	95	47	0	2	2	1	0	2	0	0	0	0
+ole32_amd64.dll	x86-64	18	2	0	47	159	29	110	0	3	0	0	0	1	0	0	7	0

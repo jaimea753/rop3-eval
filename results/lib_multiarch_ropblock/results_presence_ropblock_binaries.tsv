@@ -1,0 +1,9 @@
+library	arch	add	sub	neg	mov	lc	ld	st	xor	and	or	not	eqc	ltc	spa	sps	jmp	gsp
+libc_debian_aarch64.so	AArch64 (ARM64)	266	5	0	144	163	197	155	1	1	1	0	0	5	0	0	0	0
+zlib1g_aarch64_libz.so.1	AArch64 (ARM64)	10	1	0	6	10	10	5	1	0	0	0	0	1	0	0	0	0
+zlib1g_amd64_libz.so.1	x86-64	11	1	0	7	39	1	4	0	0	4	0	0	1	0	0	0	0
+zlib1g_x86_libz.so.1	x86	9	0	1	57	38	11	7	14	1	5	1	0	0	0	0	20	1
+zlib1g_riscv_libz.so.1	RISC-V RV64 (compressed)	41	1	0	10	135	4	16	0	0	0	0	0	0	0	0	0	0
+libc_debian_amd64.so	x86-64	48	17	0	67	198	57	279	2	3	5	0	0	11	0	0	0	1
+libc_debian_riscv.so	RISC-V RV64 (compressed)	623	5	12	190	1765	114	404	2	15	11	0	0	0	0	0	0	0
+libc_debian_x86.so	x86	149	56	15	489	247	126	451	66	55	44	0	251	24	0	0	714	1

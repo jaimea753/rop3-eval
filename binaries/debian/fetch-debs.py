@@ -433,7 +433,7 @@ def main() -> int:
             tag = f"{pkg}/{arch}"
             try:
                 bins = normalise_binaries(entry)
-                out_dir = os.path.join(out_root, arch)
+                out_dir = out_root
 
                 # Skip everything — including the Packages index fetch — when every
                 # output this package would produce is already on disk (unless

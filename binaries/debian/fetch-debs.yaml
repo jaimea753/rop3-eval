@@ -11,9 +11,10 @@
 # to pick one. This value alone fixes the exact package versions fetched below.
 snapshot: "20240101T000000Z"
 
-# Where extracted binaries land. Each file is written to <output>/<arch>/ and
-# named by the `naming:` template below, so every binary is tagged by both the
-# package name and the architecture. A manifest.json is written at the root.
+# Where extracted binaries land. Every file is written flat into <output>/,
+# named by the `naming:` template below, so the filename alone tags each binary
+# by both the package name and the architecture. A manifest.json is written at
+# the root.
 output: ./binaries
 
 # Output filename template. Placeholders: {name} (package), {arch} (the tag as
@@ -62,25 +63,24 @@ packages:
       - path: "*/libc.so.6"
         name: "libc_debian_{arch}.so"   # note: {arch} is filled in by fetch-debs
 
-  # A couple of executables from coreutils. Bare basenames match the binary
-  # wherever the package puts it (/bin vs /usr/bin varies across snapshots by
-  # usr-merge state), so these survive that churn.
-  - name: coreutils
-    binaries:
-      - ls
-      - cat
+  # # A couple of executables from coreutils. Bare basenames match the binary
+  # # wherever the package puts it (/bin vs /usr/bin varies across snapshots by
+  # # usr-merge state), so these survive that churn.
+  # - name: coreutils
+  #   binaries:
+  #     - ls
+  #     - cat
 
-  # Another library, matched by basename only.
   - name: zlib1g
     binaries:
       - libz.so.1
 
-  - name: firefox-esr
-    binaries:
-      - path: "usr/lib/firefox-esr/libxul.so"
-        name: "libxul_debian_{arch}.so"
+  # - name: firefox-esr
+  #   binaries:
+  #     - path: "usr/lib/firefox-esr/libxul.so"
+  #       name: "libxul_debian_{arch}.so"
 
-  - name: libreoffice-core
-    binaries:
-      - path: "usr/lib/libreoffice/program/libmergedlo.so"
-        name: "libmergedlo_debian_{arch}.so"
+  # - name: libreoffice-core
+  #   binaries:
+  #     - path: "usr/lib/libreoffice/program/libmergedlo.so"
+  #       name: "libmergedlo_debian_{arch}.so"

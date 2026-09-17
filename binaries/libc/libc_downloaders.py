@@ -84,6 +84,13 @@ def produce(task):
                 print(f"WARNING: skipping {task['out']}: needs {need}, "
                       f"this is {platform.system()}")
                 return
+            # Some command tasks are also CPU-specific (e.g. the macOS dyld
+            # shared cache differs between Intel and Apple Silicon Macs).
+            need_arch = task.get("arch")
+            if need_arch and platform.machine() != need_arch:
+                print(f"WARNING: skipping {task['out']}: needs arch "
+                      f"{need_arch}, this is {platform.machine()}")
+                return
             subprocess.run(task["command"], shell=True, cwd=HERE)
             print(f"Extracted {task['out']}")
         else:

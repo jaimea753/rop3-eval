@@ -18,5 +18,6 @@ pkgs.mkShell {
       requests
       libarchive-c
     ]))
+    wimlib
   ];
 }

@@ -16,8 +16,14 @@ Qt/GTK toolkit is present). Pass --pdf (or -o FILE) to write a file instead.
     python utils/heatmap.py results.tsv --backend GTK4Agg            # force a backend
 
 Styling follows the former heatmap_generator scripts (seaborn, `inferno`, per
--column normalization, `k`-abbreviated labels, transparent background), with
-library names cleaned, ordered by OS then architecture, and prettified.
+-column normalization, `k`-abbreviated labels, transparent background). Rows
+are labelled and ordered differently depending on the source: ops-mode output
+(one row per pre-named per-arch library build, e.g. the libc corpus) has its
+library names cleaned and prettified, ordered by OS then architecture;
+presence-mode output (has an 'arch' column, and may hold several unrelated
+binaries with no arch/OS naming convention to parse) is labelled with the
+actual binary name plus rop3's own detected architecture, ordered by that
+architecture then by name.
 
 If given a bare filename that isn't found, the results directory
 (default: heatmap-results/, override with --results-dir) is searched too, and
@@ -71,6 +77,18 @@ _ARCH_LOOKUP = sorted(
 _LIBC_SUFFIX = re.compile(r"_libc(?:\.so(?:\.\d+)?|\.dylib|\.dll)?$", re.IGNORECASE)
 
 
+def _pretty_arch(raw_arch):
+    """(order_idx, display) for a raw architecture string as reported by
+    rop3's own detection (the 'arch' column) -- not guessed from a filename.
+    Unrecognized values (e.g. 'unknown'/'unsupported') pass through as-is,
+    sorted after every recognized ISA."""
+    s = str(raw_arch).lower()
+    for tok, (idx, disp) in _ARCH_LOOKUP:
+        if tok in s:
+            return idx, disp
+    return len(ARCH_CANON), str(raw_arch)
+
+
 def _split_name(raw):
     """(os_part, arch_idx, pretty_label) for a raw library/binary name."""
     name = _LIBC_SUFFIX.sub("", str(raw))
@@ -98,11 +116,35 @@ def _split_name(raw):
 
 
 def load_matrix(path):
-    """Read a result TSV into a numeric count matrix, dropping the reserved
-    'arch' column (its info is already carried by the binary names). Rows are
-    ordered by OS then architecture and relabelled with prettified names."""
+    """Read a result TSV into a numeric count matrix.
+
+    Presence-mode output (has the reserved 'arch' column) may hold several
+    unrelated binaries -- not just per-arch builds of one curated library --
+    whose filenames carry no OS/arch naming convention to parse (e.g. `ls`,
+    `cat`, a bundle folder named after its own architecture). Guessing the
+    arch from the name there would silently lose it, so rows are instead
+    labelled with the actual binary name plus rop3's own detected
+    architecture, and ordered by that detected arch then by name.
+
+    Otherwise (ops-mode output, one row per pre-named per-arch library build,
+    e.g. the libc corpus) there is no detected-arch column to trust, so rows
+    are ordered by OS then architecture and relabelled with prettified names
+    parsed from the curated naming convention, as before.
+    """
     df = pd.read_csv(path, sep="\t", index_col=0)
-    df = df.drop(columns=[ARCH_COL], errors="ignore")
+
+    if ARCH_COL in df.columns:
+        arch_col = df[ARCH_COL]
+        df = df.drop(columns=[ARCH_COL])
+        df = df.apply(pd.to_numeric, errors="coerce").fillna(0)
+        if df.empty or df.shape[1] == 0:
+            raise ValueError(f"{path!r}: no numeric columns to plot.")
+
+        keys = {name: _pretty_arch(arch_col[name]) for name in df.index}
+        order = sorted(df.index, key=lambda n: (keys[n][0], n))
+        df = df.loc[order]
+        df.index = [f"{n} — {keys[n][1]}" for n in order]
+        return df
 
     # Everything left is a count / boolean; blanks and stray text -> 0.
     df = df.apply(pd.to_numeric, errors="coerce").fillna(0)

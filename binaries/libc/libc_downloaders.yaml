@@ -92,9 +92,12 @@ downloads:
     sha256: 788e5deffff47c2d2477d20a5a33cae9abd5c3005708ffc6406889add306e036
 
   # macOS libc lives in the dyld shared cache; extract it locally with ipsw
-  # (needs macOS Sonoma). `platform` gates the command to that OS.
+  # (needs macOS Sonoma). `platform` gates the command to that OS, and `arch`
+  # (matched against `platform.machine()`) picks the matching dyld cache,
+  # since Intel and Apple Silicon Macs ship different caches.
   - out: macos_amd64_libc
     platform: Darwin
+    arch: x86_64
     command: |
       brew install ipsw
       cache=/System/Volumes/Preboot/Cryptexes/OS/System/Library/dyld/dyld_shared_cache_x86_64h
@@ -108,3 +111,17 @@ downloads:
       libsystem_kernel.dylib: 3d24eb4febcd92b1fe9882944092c9cf021896d6ca7fa9f596bf821d3e8ad609
       libsystem_malloc.dylib: f85ac746106fe13b830a51b68d639f21b66f0b8c2f2409feb2384c5bd737785e
       libsystem_pthread.dylib: 94166314a6c44acc30598c89b1e9eddd54b45b383a3161eecc74cf778d24ea5b
+
+  - out: macos_aarch64_libc
+    platform: Darwin
+    arch: arm64
+    command: |
+      brew install ipsw
+      cache=/System/Volumes/Preboot/Cryptexes/OS/System/Library/dyld/dyld_shared_cache_arm64e
+      for lib in libsystem_c libsystem_kernel libsystem_malloc libsystem_pthread; do
+          ipsw dyld extract "$cache" /usr/lib/system/$lib.dylib --output macos_aarch64_libc/extract
+          find macos_aarch64_libc/extract -name "$lib.dylib" -exec cp {} macos_aarch64_libc/$lib.dylib \;
+      done
+      rm -rf macos_aarch64_libc/extract
+    # sha256 intentionally left unset: not yet verified against a reference
+    # Apple Silicon machine. Fill in after a trusted extraction.

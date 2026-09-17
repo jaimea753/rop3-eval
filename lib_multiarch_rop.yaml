@@ -1,0 +1,20 @@
+libraries: ./binaries/debian/binaries
+
+mode: presence
+
+depth:
+  default: null
+  x86: 10
+  x86_64: 10
+  aarch64: 24
+  riscv64: 24
+
+rop3_flags:
+  ret_imm: false
+  reg_aliases: false
+  keep_contradictory: false
+  avoid_canary: false
+  framed: true
+  all: false
+  allow_undeterministic: false
+  allow_complex_mem: false

@@ -1,0 +1,20 @@
+libraries: ./binaries/libc
+
+ropblock: true
+
+depth:
+  default: null
+  x86: 10
+  x86_64: 10
+  aarch64: 24
+  riscv64: 24
+
+rop3_flags:
+  ret_imm: true
+  reg_aliases: true
+  keep_contradictory: true
+  avoid_canary: false
+  framed: false
+  all: false
+  allow_undeterministic: false
+  allow_complex_mem: false

@@ -1,3 +1,5 @@
+name: libc — ROPBLOCK gadget counts
+
 libraries: ./binaries/libc
 
 ropblock: true

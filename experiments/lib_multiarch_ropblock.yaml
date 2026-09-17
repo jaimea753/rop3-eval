@@ -1,3 +1,5 @@
+name: Debian multi-arch binaries — ROPBLOCK gadget presence
+
 libraries: ./binaries/debian/binaries
 
 mode: presence

@@ -1,3 +1,5 @@
+name: libc — ROP gadget counts
+
 libraries: ./binaries/libc
 
 depth:

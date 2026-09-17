@@ -6,6 +6,11 @@
 # omitted falls back to the built-in default.
 # ---------------------------------------------------------------------------
 
+# Human-readable title for this experiment, used as the section heading when
+# utils/build_site.py publishes results/<config-stem>/ to the results site.
+# Optional; falls back to a prettified version of the config's filename stem.
+name: My experiment
+
 # Libraries to analyse. A folder (scanned for *.so*/*.dylib/*.dll/*_bin, with
 # each subfolder treated as one bundle), a single file, a glob, or a list
 # mixing any of those.

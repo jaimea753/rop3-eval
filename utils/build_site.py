@@ -12,6 +12,7 @@ without a preview image.
     python utils/build_site.py --results-dir results --out _site
 """
 import argparse
+import csv
 import html
 import os
 import shutil
@@ -47,6 +48,22 @@ PAGE_TEMPLATE = """<!doctype html>
   .card img {{ max-width: 100%; height: auto; border-radius: 4px; }}
   .no-preview {{ color: #999; font-style: italic; }}
   a.download {{ display: inline-block; margin-top: 0.5rem; }}
+  .tablewrap {{ overflow-x: auto; max-height: 32rem; overflow-y: auto;
+                border: 1px solid #8883; border-radius: 6px; }}
+  table.results {{ border-collapse: collapse; width: 100%; font-size: 0.9rem; }}
+  table.results th, table.results td {{ padding: 0.35rem 0.6rem;
+                                        border-bottom: 1px solid #8882;
+                                        text-align: left; white-space: nowrap; }}
+  table.results thead th {{ position: sticky; top: 0; background: #8881;
+                            backdrop-filter: blur(4px); font-weight: 600; }}
+  table.results td.num {{ text-align: right;
+                          font-variant-numeric: tabular-nums;
+                          font-family: ui-monospace, monospace; }}
+  table.results td.ok {{ color: #1a7f37; font-weight: 600; }}
+  table.results td.no {{ color: #b0812f; }}
+  table.results .badge {{ font-size: 0.78rem; color: #888;
+                          font-family: ui-monospace, monospace; }}
+  table.results tbody tr:hover td {{ background: #8881; }}
 </style>
 </head>
 <body>
@@ -93,6 +110,57 @@ def experiment_title(exp_name, experiments_dir):
     return exp_name.replace("_", " ").replace("-", " ").strip().title()
 
 
+ROPCHAIN_COLS = {"library", "chain", "found", "seconds"}
+
+
+def _fmt_seconds(value):
+    """Render a seconds cell: 2-dp float, or '—' for blank/non-numeric (e.g. a
+    'fatal' row where the search never ran)."""
+    try:
+        return f"{float(value):.2f}"
+    except (TypeError, ValueError):
+        return "—"
+
+
+def _ropchain_table_html(tsv):
+    """HTML <table> for a long-format ropchain-benchmark TSV (one row per
+    binary×chain pair). Returns None if the TSV isn't that shape, so the caller
+    can fall through to the heatmap path."""
+    with open(tsv, newline="") as f:
+        reader = csv.DictReader(f, delimiter="\t")
+        cols = reader.fieldnames or []
+        if not ROPCHAIN_COLS.issubset(cols):
+            return None
+        rows = list(reader)
+
+    # Numeric columns are right-aligned; found renders as a ✓/✗ glyph.
+    num_cols = {"seconds", "extract_seconds"}
+    head = "".join(f"<th>{html.escape(c)}</th>" for c in cols)
+    body_rows = []
+    for row in rows:
+        cells = []
+        for c in cols:
+            raw = row.get(c, "")
+            if c == "found":
+                yes = str(raw).strip().lower() in ("true", "1", "yes")
+                cls = "ok" if yes else "no"
+                cells.append(f'<td class="{cls}">{"✓" if yes else "✗"}</td>')
+            elif c in num_cols:
+                cells.append(f'<td class="num">{html.escape(_fmt_seconds(raw))}</td>')
+            elif c == "status":
+                cells.append(f'<td><span class="badge">{html.escape(str(raw))}</span></td>')
+            else:
+                cells.append(f"<td>{html.escape(str(raw))}</td>")
+        body_rows.append("<tr>" + "".join(cells) + "</tr>")
+
+    return (
+        '<div class="tablewrap"><table class="results">'
+        f"<thead><tr>{head}</tr></thead>"
+        f'<tbody>{"".join(body_rows)}</tbody>'
+        "</table></div>"
+    )
+
+
 def render_experiment(exp_dir, out_dir, exp_name):
     img_dir = out_dir / "img" / exp_name
     data_dir = out_dir / "data" / exp_name
@@ -104,6 +172,15 @@ def render_experiment(exp_dir, out_dir, exp_name):
         stem = tsv.stem
         shutil.copy2(tsv, data_dir / tsv.name)
         tsv_href = f"data/{exp_name}/{tsv.name}"
+
+        # Long-format ropchain-benchmark TSVs are string-valued and would coerce
+        # to an all-zero heatmap, so detect and render them as a real table
+        # first; only genuine count matrices fall through to make_heatmap().
+        table_html = _ropchain_table_html(str(tsv))
+        if table_html is not None:
+            cards.append(CARD_TEMPLATE.format(
+                stem=html.escape(stem), body=table_html, tsv_href=tsv_href))
+            continue
 
         try:
             df = load_matrix(str(tsv))

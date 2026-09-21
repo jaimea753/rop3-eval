@@ -36,6 +36,15 @@ ROP3_KWARGS   = dict(DEFAULT_ROP3_FLAGS)   # extra Rop3() flag kwargs
 # script. Overridable by the positional argument or the config's 'rop3' key.
 DEFAULT_ROP3_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'rop3')
 DEPTH_BY_ARCH = {}                          # {arch_key: depth_bytes | None}
+CHAIN_TIMEOUT = None                        # per-ropchain search timeout (s) | None
+
+
+class _ChainTimeout(Exception):
+    """Raised inside a worker when a single ropchain search exceeds CHAIN_TIMEOUT."""
+
+
+def _alarm_handler(signum, frame):
+    raise _ChainTimeout()
 
 try:
     import resource
@@ -57,20 +66,38 @@ def prepare_env(rop3_folder):
 _api_mod      = None
 _ropchain_mod = None
 
-def _worker_init(rop3_folder, rop3_kwargs, depth_by_arch):
+def _mem_limit_bytes():
+    """Address-space cap for a gadget-scan process: 16 GiB, but never more than
+    ~75% of physical RAM. On a small-memory host this keeps a huge binary's scan
+    hitting a catchable MemoryError (malloc → NULL) instead of the kernel OOM
+    killer sending an uncatchable SIGKILL that would abort the whole run."""
+    hard = 16 * 1024 * 1024 * 1024
+    try:
+        phys = os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')
+        return max(1 * 1024 * 1024 * 1024, min(hard, int(phys * 0.75)))
+    except (ValueError, OSError, AttributeError):
+        return hard
+
+
+def _apply_memory_limit():
+    if not HAS_RESOURCE:
+        return
+    cap = _mem_limit_bytes()
+    try:
+        resource.setrlimit(resource.RLIMIT_AS, (cap, cap))
+    except Exception as e:
+        print(f"  [WARN] Could not set memory limit: {e}", file=sys.stderr)
+
+
+def _worker_init(rop3_folder, rop3_kwargs, depth_by_arch, chain_timeout=None):
     """Initializes the worker process, setting memory limits and loading rop3."""
     signal.signal(signal.SIGINT, signal.SIG_IGN)
+    _apply_memory_limit()
 
-    if HAS_RESOURCE:
-        max_mem_bytes = 16 * 1024 * 1024 * 1024
-        try:
-            resource.setrlimit(resource.RLIMIT_AS, (max_mem_bytes, max_mem_bytes))
-        except Exception as e:
-            print(f"  [WARN] Could not set memory limit: {e}", file=sys.stderr)
-
-    global _api_mod, _ropchain_mod, ROP3_KWARGS, DEPTH_BY_ARCH
+    global _api_mod, _ropchain_mod, ROP3_KWARGS, DEPTH_BY_ARCH, CHAIN_TIMEOUT
     ROP3_KWARGS   = rop3_kwargs
     DEPTH_BY_ARCH = depth_by_arch
+    CHAIN_TIMEOUT = chain_timeout
     if rop3_folder not in sys.path:
         sys.path.insert(0, rop3_folder)
 
@@ -94,6 +121,17 @@ def _arch_key(arch):
     return arch.name
 
 
+def _binary_arch_key(lib_item):
+    """Canonical arch key ('x86' / 'x86_64' / 'aarch64' / 'riscv64') for a
+    library item, resolved from its ELF/PE/Mach-O header only (no gadget scan).
+    Returns None if the header can't be read or the arch is unrecognized."""
+    try:
+        import rop3.binary as _binary
+        return _arch_key(_binary.Binary(lib_item['files'][0], None, None).get_arch())
+    except Exception:
+        return None
+
+
 def _resolve_depth(lib_item, fallback):
     """Depth (bytes) for this binary: its architecture's entry in
     DEPTH_BY_ARCH, else the map's 'default', else `fallback`. A value of None
@@ -101,12 +139,7 @@ def _resolve_depth(lib_item, fallback):
     the arch only parses the header (no gadget scan)."""
     if not DEPTH_BY_ARCH:
         return fallback
-    key = None
-    try:
-        import rop3.binary as _binary
-        key = _arch_key(_binary.Binary(lib_item['files'][0], None, None).get_arch())
-    except Exception:
-        pass
+    key = _binary_arch_key(lib_item)
     if key in DEPTH_BY_ARCH:
         return DEPTH_BY_ARCH[key]
     return DEPTH_BY_ARCH.get('default', fallback)
@@ -232,46 +265,151 @@ def _presence_lib_worker(lib_item, single_ops, depth, jop, ropblock):
 
 
 def _ropchains_lib_worker(lib_item, ropchain_files, depth, jop, ropblock):
-    lib_name = lib_item['name']
-    results = {}
+    """Benchmark ROP-chain search for one binary.
 
+    Returns (lib_name, payload) where payload is
+        {'arch': <display name>, 'extract_seconds': <float|None>,
+         'chains': [{'chain': <basename>, 'found': bool,
+                     'seconds': <float|None>, 'status': <str>}, ...]}
+    Only chains whose target architecture matches the binary are run (a chain
+    whose arch can't be inferred from its name is run against every binary);
+    arch-mismatched chains are logged as `[skip]` and produce no row. `seconds`
+    times the search only -- gadget extraction is the shared per-binary cost
+    reported once as `extract_seconds`. `status` is one of found / not-found /
+    timeout / error / fatal (the last when gadget extraction itself failed)."""
+    lib_name  = lib_item['name']
+    arch_key  = _binary_arch_key(lib_item)
+
+    matched, skipped = [], []
+    for rc_file in ropchain_files:
+        ca = _chain_arch(rc_file)
+        if ca is not None and arch_key is not None and ca != arch_key:
+            skipped.append(rc_file)
+        else:
+            matched.append(rc_file)
+    for rc_file in skipped:
+        print(f"    [skip] {lib_name} ({arch_key or '?'}) × {os.path.basename(rc_file)}: "
+              f"targets {_chain_arch(rc_file)}", file=sys.stderr)
+
+    chains = []
     try:
         from rop3.arch import arch_singleton
         arch_singleton.reset()
 
         rop = _api_mod.Rop3(lib_item['files'], depth=_resolve_depth(lib_item, depth), rop=not jop, jop=jop, ropblock=ropblock, **ROP3_KWARGS)
+        t0 = time.perf_counter()
         rop.gadgets()
+        extract_seconds = time.perf_counter() - t0
+        arch_name = arch_singleton.arch.name
 
-        for rc_file in ropchain_files:
+        for rc_file in matched:
             chain_name = os.path.basename(rc_file)
+            if CHAIN_TIMEOUT:
+                signal.signal(signal.SIGALRM, _alarm_handler)
+                signal.setitimer(signal.ITIMER_REAL, CHAIN_TIMEOUT)
+            t = time.perf_counter()
             try:
                 next(rop.ropchain(rc_file))
-                results[chain_name] = True
+                found, status = True, 'found'
             except (_ropchain_mod.RopChainNotFound, StopIteration):
-                results[chain_name] = False
+                found, status = False, 'not-found'
+            except _ChainTimeout:
+                found, status = False, 'timeout'
+                print(f"  [WARN] {lib_name} × {chain_name}: timed out after {CHAIN_TIMEOUT}s", file=sys.stderr)
             except MemoryError:
+                found, status = False, 'error'
                 print(f"  [WARN] {lib_name} × {chain_name}: Out of Memory", file=sys.stderr)
-                results[chain_name] = False
             except Exception as exc:
+                found, status = False, 'error'
                 print(f"  [WARN] {lib_name} × {chain_name}: {type(exc).__name__}: {exc}", file=sys.stderr)
-                results[chain_name] = False
+            finally:
+                if CHAIN_TIMEOUT:
+                    signal.setitimer(signal.ITIMER_REAL, 0)
+            seconds = round(time.perf_counter() - t, 4)
+            chains.append({'chain': chain_name, 'found': found,
+                           'seconds': seconds, 'status': status})
+
+        return lib_name, {'arch': arch_name, 'extract_seconds': round(extract_seconds, 4),
+                          'chains': chains}
 
     except MemoryError:
         print(f"  [FATAL] {lib_name}: Out of Memory during gadget extraction", file=sys.stderr)
-        for rc_file in ropchain_files:
-            results[os.path.basename(rc_file)] = False
+        status = 'fatal'
     except Exception as fatal_exc:
         print(f"  [FATAL] Failed to process {lib_name}: {fatal_exc}", file=sys.stderr)
-        for rc_file in ropchain_files:
-            results[os.path.basename(rc_file)] = False
-
+        status = 'fatal'
     finally:
         if 'rop' in locals(): del rop
         gc.collect()
 
-    return lib_name, results
+    # Gadget extraction failed: emit one 'fatal' row per matched chain so the
+    # pair still appears (search never ran, hence seconds/extract unknown).
+    chains = [{'chain': os.path.basename(f), 'found': False,
+               'seconds': None, 'status': status} for f in matched]
+    return lib_name, {'arch': arch_key or 'unknown', 'extract_seconds': None,
+                      'chains': chains}
 
-def run_tasks(libs, items_to_test, worker_func, df, out_file, is_ropchain=False):
+class MatrixCollector:
+    """Collector for the wide count matrices (ops / presence modes): each
+    worker result maps operation -> count and is written straight into a
+    per-library row of the DataFrame, checkpointed to TSV after every library."""
+
+    def __init__(self, df, out_file):
+        self.df = df
+        self.out_file = out_file
+
+    def add(self, lib_name, results):
+        for item_name, value in results.items():
+            self.df.at[lib_name, item_name] = value
+            if item_name == 'arch':
+                print(f"    ->  {lib_name}: arch = {value}", flush=True)
+            else:
+                print(f"    -  {lib_name}  ×  {item_name}: {value} gadgets", flush=True)
+
+    def save(self):
+        self.df.to_csv(self.out_file, sep="\t")
+
+
+class RopchainRowCollector:
+    """Collector for the ropchain benchmark: accumulates one row per
+    (binary, chain) pair and writes a long-format TSV, checkpointed after every
+    library. Arch-mismatched pairs never reach here (they produce no row)."""
+
+    COLUMNS = ['library', 'arch', 'chain', 'found', 'seconds', 'extract_seconds', 'status']
+
+    def __init__(self, out_file):
+        self.out_file = out_file
+        self.rows = []
+
+    def add(self, lib_name, payload):
+        arch    = payload.get('arch', 'unknown')
+        extract = payload.get('extract_seconds')
+        for c in payload.get('chains', []):
+            self.rows.append({
+                'library': lib_name, 'arch': arch, 'chain': c['chain'],
+                'found': c['found'], 'seconds': c['seconds'],
+                'extract_seconds': extract, 'status': c['status'],
+            })
+            mark = "✓" if c['found'] else "✗"
+            secs = "n/a" if c['seconds'] is None else f"{c['seconds']:.2f}s"
+            print(f"    {mark}  {lib_name}  ×  {c['chain']}: {c['status']} ({secs})", flush=True)
+
+    def save(self):
+        df = pd.DataFrame(self.rows, columns=self.COLUMNS)
+        if not df.empty:
+            df = df.sort_values(['library', 'chain']).reset_index(drop=True)
+        df.to_csv(self.out_file, sep="\t", index=False)
+
+    def summary(self, total_pairs):
+        """(found, matched, skipped) counts. `matched` = pairs that were run
+        (one row each); `skipped` = arch-mismatched pairs that produced no row."""
+        found   = sum(1 for r in self.rows if r['found'])
+        matched = len(self.rows)
+        skipped = total_pairs - matched
+        return found, matched, skipped
+
+
+def run_tasks(libs, items_to_test, worker_func, collector):
     total_libs = len(libs)
     total_items = len(items_to_test)
     total_combinations = total_libs * total_items
@@ -285,6 +423,10 @@ def run_tasks(libs, items_to_test, worker_func, df, out_file, is_ropchain=False)
 
     if SEQUENTIAL:
         global _api_mod, _ropchain_mod
+        # Pool workers get this cap in _worker_init; in sequential mode the scan
+        # runs in this very process, so apply it here too or a huge binary can
+        # OOM-kill the whole run instead of raising a catchable MemoryError.
+        _apply_memory_limit()
         import rop3.api      as api
         import rop3.ropchain as ropchain
         _api_mod      = api
@@ -292,45 +434,32 @@ def run_tasks(libs, items_to_test, worker_func, df, out_file, is_ropchain=False)
 
         for lib in libs:
             lib_name, results = worker_func(lib, items_to_test, GADFINDER_DEPTH, JOP, ROPBLOCK)
-            _process_worker_results(lib_name, results, df, is_ropchain)
+            collector.add(lib_name, results)
             done_libs += 1
             print(f"  [{done_libs}/{total_libs} libraries complete] → checkpoint saved", flush=True)
-            df.to_csv(out_file, sep="\t")
+            collector.save()
     else:
         with ProcessPoolExecutor(
             max_workers=WORKERS,
             initializer=_worker_init,
-            initargs=(ROP3_FOLDER, ROP3_KWARGS, DEPTH_BY_ARCH)
+            initargs=(ROP3_FOLDER, ROP3_KWARGS, DEPTH_BY_ARCH, CHAIN_TIMEOUT)
         ) as pool:
             futures = {
                 pool.submit(worker_func, lib, items_to_test, GADFINDER_DEPTH, JOP, ROPBLOCK): lib
                 for lib in libs
             }
-            
+
             for fut in as_completed(futures):
                 lib = futures[fut]
                 try:
                     lib_name, results = fut.result()
-                    _process_worker_results(lib_name, results, df, is_ropchain)
+                    collector.add(lib_name, results)
                 except Exception as exc:
                     print(f"  [ERROR] Worker crashed processing {lib['name']}: {exc}", file=sys.stderr)
-                
+
                 done_libs += 1
                 print(f"  [{done_libs}/{total_libs} libraries complete] → checkpoint saved", flush=True)
-                df.to_csv(out_file, sep="\t")
-
-
-def _process_worker_results(lib_name, results, df, is_ropchain):
-    """Helper to update the DataFrame and print individual combination logs."""
-    for item_name, value in results.items():
-        df.at[lib_name, item_name] = value
-        if item_name == 'arch':
-            print(f"    ->  {lib_name}: arch = {value}", flush=True)
-        elif is_ropchain:
-            status = "✓" if value else "✗"
-            print(f"    {status}  {lib_name}  ×  {item_name}", flush=True)
-        else:
-            print(f"    -  {lib_name}  ×  {item_name}: {value} gadgets", flush=True)
+                collector.save()
 
 def get_single_ops():
     if JOP:
@@ -398,6 +527,26 @@ def load_config(path):
     return cfg
 
 
+_CHAIN_ARCH_TOKENS = {
+    'amd64': 'x86_64', 'x86_64': 'x86_64', 'x64': 'x86_64',
+    'x86': 'x86', 'i386': 'x86', 'i686': 'x86',
+    'aarch64': 'aarch64', 'arm64': 'aarch64',
+    'riscv': 'riscv64', 'riscv64': 'riscv64', 'rv64': 'riscv64',
+}
+
+
+def _chain_arch(path):
+    """Canonical arch a ropchain file targets, inferred from its filename tokens
+    (e.g. 'syscall_exec_amd64.txt' -> 'x86_64'). Returns None when no token is
+    recognized; such a chain is treated as arch-agnostic and run against every
+    binary, so a differently-named chain is never silently dropped."""
+    stem = os.path.splitext(os.path.basename(path))[0].lower()
+    for token in stem.replace('-', '_').split('_'):
+        if token in _CHAIN_ARCH_TOKENS:
+            return _CHAIN_ARCH_TOKENS[token]
+    return None
+
+
 def get_ropchain_files(ropchains_folder):
     files = []
     extensions = ['*.txt', '*.rop']
@@ -433,13 +582,14 @@ def main(lib_folder):
     df = pd.DataFrame(index=[item['name'] for item in libs], columns=single_ops)
     df.index.name = "library"
     df.columns.name = "operation"
-    df.to_csv(out_file, sep="\t")
+    collector = MatrixCollector(df, out_file)
+    collector.save()
 
     try:
-        run_tasks(libs, single_ops, _single_ops_lib_worker, df, out_file, is_ropchain=False)
+        run_tasks(libs, single_ops, _single_ops_lib_worker, collector)
     except KeyboardInterrupt:
         print("\nInterrupted — saving partial results …", file=sys.stderr)
-        df.to_csv(out_file, sep="\t")
+        collector.save()
 
     print(f"\nSaved to {out_file!r}")
     print(f"Completed in {time.time() - t1:.2f} seconds")
@@ -472,13 +622,14 @@ def main_presence(lib_folder):
                       columns=['arch'] + single_ops)
     df.index.name = "library"
     df.columns.name = "operation"
-    df.to_csv(out_file, sep="\t")
+    collector = MatrixCollector(df, out_file)
+    collector.save()
 
     try:
-        run_tasks(libs, single_ops, _presence_lib_worker, df, out_file, is_ropchain=False)
+        run_tasks(libs, single_ops, _presence_lib_worker, collector)
     except KeyboardInterrupt:
         print("\nInterrupted — saving partial results …", file=sys.stderr)
-        df.to_csv(out_file, sep="\t")
+        collector.save()
 
     print(f"\nGadget presence by architecture:")
     print(df.to_string())
@@ -498,32 +649,26 @@ def main_ropchains(lib_folder, ropchains_folder):
         print("ERROR: No ropchain files found.", file=sys.stderr)
         sys.exit(1)
 
-    chain_names = [os.path.basename(f) for f in ropchain_files]
-    lib_names   = [item['name'] for item in libs]
-
     out_file = ("results_ropchains_jop.tsv" if JOP
                 else "results_ropchains_ropblock.tsv" if ROPBLOCK
                 else "results_ropchains_rop.tsv")
 
-    df = pd.DataFrame(
-        [[item['size_mb']] + [False] * len(chain_names) for item in libs],
-        index=lib_names,
-        columns=['size_mb'] + chain_names,
-    )
-    df.index.name   = "library"
-    df.columns.name = "ropchain"
-    df.to_csv(out_file, sep="\t")
+    collector = RopchainRowCollector(out_file)
+    collector.save()   # write the header immediately so the checkpoint exists
 
     try:
-        run_tasks(libs, ropchain_files, _ropchains_lib_worker, df, out_file, is_ropchain=True)
+        run_tasks(libs, ropchain_files, _ropchains_lib_worker, collector)
     except KeyboardInterrupt:
         print("\nInterrupted — saving partial results …", file=sys.stderr)
-        df.to_csv(out_file, sep="\t")
+        collector.save()
 
-    hits = int(df[chain_names].values.sum())
-    total_combinations = len(libs) * len(ropchain_files)
-    print(f"\nResults ({hits}/{total_combinations} combinations found a valid ropchain):")
-    print(df.to_string())
+    total_pairs = len(libs) * len(ropchain_files)
+    found, matched, skipped = collector.summary(total_pairs)
+    print(f"\nResults ({found}/{matched} arch-matched pairs realizable; "
+          f"{skipped} pair(s) skipped for arch mismatch):")
+    if collector.rows:
+        df = pd.DataFrame(collector.rows, columns=RopchainRowCollector.COLUMNS)
+        print(df.sort_values(['library', 'chain']).to_string(index=False))
     print(f"\nSaved to {out_file!r}")
     print(f"Completed in {time.time() - t1:.2f} seconds")
 
@@ -562,7 +707,14 @@ if __name__ == "__main__":
     )
     arg_parser.add_argument(
         '--ropchains', type=str, metavar='DIR', default=None,
-        help='directory of ropchain files (.rop or .txt). Produces a boolean matrix.',
+        help='directory of ropchain files (.rop or .txt). Produces a long-format '
+             'benchmark table (one row per arch-matched binary×chain pair, with '
+             'found/seconds). Config key: mode: ropchains + ropchains: <dir>.',
+    )
+    arg_parser.add_argument(
+        '--chain-timeout', type=float, default=None, metavar='SECONDS',
+        help='per-chain search timeout for ropchains mode (0/unset = unlimited). '
+             "Config key: 'chain_timeout'.",
     )
     arg_parser.add_argument(
         '--presence', action='store_true', default=None,
@@ -612,8 +764,20 @@ if __name__ == "__main__":
     SEQUENTIAL = args.sequential if args.sequential is not None else bool(config.get('sequential', False))
     WORKERS    = args.workers    if args.workers    is not None else int(config.get('workers', 4))
     ropchains  = args.ropchains  or config.get('ropchains')
+    mode       = str(config.get('mode', '')).lower()
     presence   = args.presence   if args.presence   is not None \
-        else (str(config.get('mode', '')).lower() == 'presence')
+        else (mode == 'presence')
+
+    # `mode: ropchains` needs a chain directory; dispatch keys off that path, so
+    # a missing 'ropchains:' would otherwise fall through silently to ops mode.
+    if mode == 'ropchains' and not ropchains:
+        print("ERROR: mode: ropchains requires a 'ropchains' directory key "
+              "(or --ropchains DIR).", file=sys.stderr)
+        sys.exit(1)
+
+    # Per-chain search timeout (ropchains mode); 0 or unset means unlimited.
+    _ct = args.chain_timeout if args.chain_timeout is not None else config.get('chain_timeout')
+    CHAIN_TIMEOUT = float(_ct) if _ct else None
 
     # Rop3 flag kwargs passed straight to the Rop3 constructor.
     ROP3_KWARGS = dict(config.get('rop3_flags') or DEFAULT_ROP3_FLAGS)

@@ -31,7 +31,19 @@ jop: false
 ropblock: false
 
 # Directory of ropchain files (.rop / .txt); only used by mode: ropchains.
+# The result is a long-format benchmark table (one row per arch-matched
+# binary x chain pair: library, arch, chain, found, seconds, extract_seconds,
+# status). A chain is only run against binaries of its own architecture, which
+# is inferred from the chain filename (e.g. syscall_exec_amd64.txt -> x86_64);
+# a chain whose arch can't be inferred runs against every binary. `seconds`
+# times the search only -- gadget extraction is the shared per-binary cost,
+# reported once as `extract_seconds`.
 ropchains: null
+
+# Per-chain search timeout in seconds (mode: ropchains only). null/0 = unlimited.
+# A chain that exceeds it is recorded found: false, status: timeout. Overridable
+# with --chain-timeout.
+chain_timeout: null
 
 # Parallelism.
 workers: 4

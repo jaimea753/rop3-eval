@@ -80,7 +80,7 @@ packages:
   #     - path: "usr/lib/firefox-esr/libxul.so"
   #       name: "libxul_debian_{arch}.so"
 
-  # - name: libreoffice-core
-  #   binaries:
-  #     - path: "usr/lib/libreoffice/program/libmergedlo.so"
-  #       name: "libmergedlo_debian_{arch}.so"
+  - name: libreoffice-core
+    binaries:
+      - path: "usr/lib/libreoffice/program/libmergedlo.so"
+        name: "libmergedlo_debian_{arch}.so"

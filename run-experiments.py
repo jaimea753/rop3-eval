@@ -19,6 +19,18 @@ import pandas as pd
 import pathlib
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
+# Provenance (which machine ran this) and the per-library result cache live in
+# utils/; both are stdlib + PyYAML only. If they cannot be imported the run
+# simply goes ahead uncached rather than failing.
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'utils'))
+try:
+    import machine_specs
+    import benchcache
+except ImportError as _import_exc:          # pragma: no cover - optional helpers
+    machine_specs = benchcache = None
+    print(f"[WARN] utils/machine_specs.py or utils/benchcache.py unavailable "
+          f"({_import_exc}): results will not be cached", file=sys.stderr)
+
 ROP_GADGETS = ['add', 'sub', 'neg', 'mov', 'lc', 'ld', 'st', 'xor', 'and', 'or', 'not', 'eqc', 'ltc', 'spa', 'sps', 'jmp', 'gsp']
 JOP_GADGETS = ['add', 'sub', 'neg', 'mov', 'lc', 'ld', 'st', 'xor', 'and', 'or', 'not', 'eqc', 'ltc', 'spa', 'sps', 'gsp']
 
@@ -37,6 +49,19 @@ ROP3_KWARGS   = dict(DEFAULT_ROP3_FLAGS)   # extra Rop3() flag kwargs
 DEFAULT_ROP3_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'rop3')
 DEPTH_BY_ARCH = {}                          # {arch_key: depth_bytes | None}
 CHAIN_TIMEOUT = None                        # per-ropchain search timeout (s) | None
+
+# --- Benchmark cache / provenance (parent process only) ---------------------
+# A library's result is reused when the machine, the rop3 commit, the scan
+# parameters and the task list all match; see utils/benchcache.py for what the
+# key deliberately ignores (the *contents* of the binaries).
+CACHE         = None      # benchcache.Cache, built per run by _make_cache()
+CACHE_ENABLED = True
+CACHE_REFRESH = False     # re-measure everything, but still write the results
+CACHE_DIR     = None
+CONFIG        = {}        # the raw config mapping, for hashing and run-meta
+CONFIG_PATH   = None
+MACHINE       = None      # machine.yaml contents | None
+ROP3_COMMIT   = None      # HEAD of the rop3 submodule (+ '-dirty') | None
 
 
 class _ChainTimeout(Exception):
@@ -148,6 +173,9 @@ def _resolve_depth(lib_item, fallback):
 def _single_ops_lib_worker(lib_item, single_ops, depth, jop, ropblock):
     lib_name = lib_item['name']
     results = {}
+    # Cleared by any failure that says more about this run than about the
+    # binary (OOM, an unexpected crash): those results must not be cached.
+    cacheable = True
 
     try:
         from rop3.arch import arch_singleton
@@ -173,14 +201,17 @@ def _single_ops_lib_worker(lib_item, single_ops, depth, jop, ropblock):
             except MemoryError:
                 print(f"  [WARN] {lib_name} × {op_str}: Out of Memory", file=sys.stderr)
                 results[op_str] = 0
+                cacheable = False
             except Exception as exc:
                 print(f"  [WARN] {lib_name} × {op_str}: {exc}", file=sys.stderr)
                 results[op_str] = 0
+                cacheable = False
 
     except MemoryError:
         print(f"  [FATAL] {lib_name}: Out of Memory during gadget extraction", file=sys.stderr)
         for op_str in single_ops:
             results[op_str] = 0
+        cacheable = False
     except NotImplementedError as ni:
         # Architecture unsupported at load time (e.g. RV32): every op is absent.
         print(f"  [n/a]   {lib_name}: {ni}", file=sys.stderr)
@@ -190,12 +221,13 @@ def _single_ops_lib_worker(lib_item, single_ops, depth, jop, ropblock):
         print(f"  [FATAL] Failed to process {lib_name}: {fatal_exc}", file=sys.stderr)
         for op_str in single_ops:
             results[op_str] = 0
+        cacheable = False
 
     finally:
         if 'rop' in locals(): del rop
         gc.collect()
 
-    return lib_name, results
+    return lib_name, results, cacheable
 
 
 def _presence_lib_worker(lib_item, single_ops, depth, jop, ropblock):
@@ -212,6 +244,7 @@ def _presence_lib_worker(lib_item, single_ops, depth, jop, ropblock):
     lib_name = lib_item['name']
     results = {}
     arch_name = 'unknown'
+    cacheable = True          # see _single_ops_lib_worker
 
     try:
         from rop3.arch import arch_singleton
@@ -237,14 +270,17 @@ def _presence_lib_worker(lib_item, single_ops, depth, jop, ropblock):
             except MemoryError:
                 print(f"  [WARN] {lib_name} × {op_str}: Out of Memory", file=sys.stderr)
                 results[op_str] = 0
+                cacheable = False
             except Exception as exc:
                 print(f"  [WARN] {lib_name} × {op_str}: {exc}", file=sys.stderr)
                 results[op_str] = 0
+                cacheable = False
 
     except MemoryError:
         print(f"  [FATAL] {lib_name}: Out of Memory during gadget extraction", file=sys.stderr)
         for op_str in single_ops:
             results[op_str] = 0
+        cacheable = False
     except NotImplementedError as ni:
         # Architecture unsupported at load time (e.g. RV32): everything absent.
         print(f"  [n/a]   {lib_name}: {ni}", file=sys.stderr)
@@ -255,19 +291,20 @@ def _presence_lib_worker(lib_item, single_ops, depth, jop, ropblock):
         print(f"  [FATAL] Failed to process {lib_name}: {fatal_exc}", file=sys.stderr)
         for op_str in single_ops:
             results[op_str] = 0
+        cacheable = False
 
     finally:
         if 'rop' in locals(): del rop
         gc.collect()
 
     results['arch'] = arch_name
-    return lib_name, results
+    return lib_name, results, cacheable
 
 
 def _ropchains_lib_worker(lib_item, ropchain_files, depth, jop, ropblock):
     """Benchmark ROP-chain search for one binary.
 
-    Returns (lib_name, payload) where payload is
+    Returns (lib_name, payload, cacheable) where payload is
         {'arch': <display name>, 'extract_seconds': <float|None>,
          'chains': [{'chain': <basename>, 'found': bool,
                      'seconds': <float|None>, 'status': <str>}, ...]}
@@ -329,8 +366,12 @@ def _ropchains_lib_worker(lib_item, ropchain_files, depth, jop, ropblock):
             chains.append({'chain': chain_name, 'found': found,
                            'seconds': seconds, 'status': status})
 
+        # A timeout is a real, reproducible outcome under the same chain_timeout
+        # (and the most expensive one to repeat), so it stays cacheable; an
+        # 'error' is environmental (OOM, an engine crash) and is not.
+        cacheable = not any(c['status'] == 'error' for c in chains)
         return lib_name, {'arch': arch_name, 'extract_seconds': round(extract_seconds, 4),
-                          'chains': chains}
+                          'chains': chains}, cacheable
 
     except MemoryError:
         print(f"  [FATAL] {lib_name}: Out of Memory during gadget extraction", file=sys.stderr)
@@ -347,7 +388,7 @@ def _ropchains_lib_worker(lib_item, ropchain_files, depth, jop, ropblock):
     chains = [{'chain': os.path.basename(f), 'found': False,
                'seconds': None, 'status': status} for f in matched]
     return lib_name, {'arch': arch_key or 'unknown', 'extract_seconds': None,
-                      'chains': chains}
+                      'chains': chains}, False
 
 class MatrixCollector:
     """Collector for the wide count matrices (ops / presence modes): each
@@ -409,6 +450,85 @@ class RopchainRowCollector:
         return found, matched, skipped
 
 
+def _make_cache(items_to_test, mode):
+    """Build this run's result cache, or None when it is off or unusable.
+
+    Stored in the CACHE global because run_tasks() reads its settings the same
+    way it reads WORKERS/SEQUENTIAL. Anything missing -- helpers, a machine id,
+    the rop3 commit -- downgrades to "no cache" with a warning: a slow run is
+    always better than a wrong one.
+    """
+    global CACHE
+    CACHE = None
+    if not CACHE_ENABLED or benchcache is None:
+        return None
+
+    if not ROP3_COMMIT:
+        print("[WARN] rop3 commit unknown (not a git checkout?): running without "
+              "the result cache", file=sys.stderr)
+        return None
+
+    machine = (MACHINE or {}).get('id') or (machine_specs.machine_id() if machine_specs else None)
+    if not machine:
+        print("[WARN] machine id unknown: running without the result cache",
+              file=sys.stderr)
+        return None
+
+    CACHE = benchcache.Cache(
+        CACHE_DIR or benchcache.DEFAULT_CACHE_DIR,
+        machine=str(machine),
+        commit=ROP3_COMMIT,
+        cfg_hash=benchcache.config_hash(CONFIG, mode),
+        items=benchcache.fingerprint_items(items_to_test),
+        mode=mode,
+        read=not CACHE_REFRESH,
+        write=True,
+    )
+    note = " [--refresh-cache: re-measuring everything]" if CACHE_REFRESH else ""
+    print(f"Cache {CACHE.dir} — {CACHE.describe()}{note}")
+    return CACHE
+
+
+def _write_run_meta(mode, out_file, elapsed, total_libs, path="run-meta.yaml"):
+    """Record which machine and which rop3 produced out_file, next to it.
+
+    Written into the current directory, which experiments/run_all.py sets to
+    results/<experiment>/ -- so the provenance is committed alongside the TSV
+    and picked up by utils/build_site.py. YAML rather than TSV on purpose:
+    build_site.py globs *.tsv and would render a sidecar as a results card.
+    """
+    import datetime
+    meta = {
+        'generated':       datetime.datetime.now().astimezone().isoformat(timespec='seconds'),
+        'results':         out_file,
+        'mode':            mode,
+        'experiment':      CONFIG.get('name'),
+        # experiments/run_all.py feeds the driver a rewritten temp copy of the
+        # config, so this basename carries the experiment stem plus noise; the
+        # `experiment` title above is the readable one.
+        'config':          os.path.basename(CONFIG_PATH) if CONFIG_PATH else None,
+        'config_hash':     benchcache.config_hash(CONFIG, mode) if benchcache else None,
+        'rop3_commit':     ROP3_COMMIT,
+        'elapsed_seconds': round(elapsed, 2),
+        'libraries':       total_libs,
+        'reused_from_cache': CACHE.hits if CACHE is not None else 0,
+        'workers':         1 if SEQUENTIAL else WORKERS,
+        'sequential':      bool(SEQUENTIAL),
+        'machine':         MACHINE,
+    }
+    try:
+        with open(path, 'w') as f:
+            if machine_specs is not None:
+                machine_specs.dump_yaml(meta, f)
+            else:
+                import yaml
+                yaml.safe_dump(meta, f, sort_keys=False, allow_unicode=True)
+    except Exception as exc:
+        print(f"[WARN] could not write {path}: {exc}", file=sys.stderr)
+        return
+    print(f"Run metadata saved to {path!r}")
+
+
 def run_tasks(libs, items_to_test, worker_func, collector):
     total_libs = len(libs)
     total_items = len(items_to_test)
@@ -421,6 +541,28 @@ def run_tasks(libs, items_to_test, worker_func, collector):
         f"[{'sequential' if SEQUENTIAL else f'{WORKERS} workers'}]"
     )
 
+    # Replay whatever this machine already measured under the same conditions,
+    # then run only what is left. Cached libraries go through the collector
+    # like any other result, so the progress counter and the ropchains pair
+    # arithmetic stay honest.
+    pending = libs
+    if CACHE is not None:
+        pending = []
+        for lib in libs:
+            payload = CACHE.get(lib['name'])
+            if payload is None:
+                pending.append(lib)
+                continue
+            collector.add(lib['name'], payload)
+            done_libs += 1
+            print(f"  [cache] {lib['name']}: reusing previous result "
+                  f"[{done_libs}/{total_libs}]", flush=True)
+        if done_libs:
+            collector.save()
+        if not pending:
+            print("  Everything served from the cache; nothing to run.")
+            return
+
     if SEQUENTIAL:
         global _api_mod, _ropchain_mod
         # Pool workers get this cap in _worker_init; in sequential mode the scan
@@ -432,8 +574,10 @@ def run_tasks(libs, items_to_test, worker_func, collector):
         _api_mod      = api
         _ropchain_mod = ropchain
 
-        for lib in libs:
-            lib_name, results = worker_func(lib, items_to_test, GADFINDER_DEPTH, JOP, ROPBLOCK)
+        for lib in pending:
+            lib_name, results, cacheable = worker_func(lib, items_to_test, GADFINDER_DEPTH, JOP, ROPBLOCK)
+            if CACHE is not None and cacheable:
+                CACHE.put(lib_name, results)
             collector.add(lib_name, results)
             done_libs += 1
             print(f"  [{done_libs}/{total_libs} libraries complete] → checkpoint saved", flush=True)
@@ -446,13 +590,15 @@ def run_tasks(libs, items_to_test, worker_func, collector):
         ) as pool:
             futures = {
                 pool.submit(worker_func, lib, items_to_test, GADFINDER_DEPTH, JOP, ROPBLOCK): lib
-                for lib in libs
+                for lib in pending
             }
 
             for fut in as_completed(futures):
                 lib = futures[fut]
                 try:
-                    lib_name, results = fut.result()
+                    lib_name, results, cacheable = fut.result()
+                    if CACHE is not None and cacheable:
+                        CACHE.put(lib_name, results)
                     collector.add(lib_name, results)
                 except Exception as exc:
                     print(f"  [ERROR] Worker crashed processing {lib['name']}: {exc}", file=sys.stderr)
@@ -584,6 +730,7 @@ def main(lib_folder):
     df.columns.name = "operation"
     collector = MatrixCollector(df, out_file)
     collector.save()
+    _make_cache(single_ops, 'ops')
 
     try:
         run_tasks(libs, single_ops, _single_ops_lib_worker, collector)
@@ -593,6 +740,7 @@ def main(lib_folder):
 
     print(f"\nSaved to {out_file!r}")
     print(f"Completed in {time.time() - t1:.2f} seconds")
+    _write_run_meta('ops', out_file, time.time() - t1, len(libs))
 
 
 def main_presence(lib_folder):
@@ -624,6 +772,7 @@ def main_presence(lib_folder):
     df.columns.name = "operation"
     collector = MatrixCollector(df, out_file)
     collector.save()
+    _make_cache(single_ops, 'presence')
 
     try:
         run_tasks(libs, single_ops, _presence_lib_worker, collector)
@@ -635,6 +784,7 @@ def main_presence(lib_folder):
     print(df.to_string())
     print(f"\nSaved to {out_file!r}")
     print(f"Completed in {time.time() - t1:.2f} seconds")
+    _write_run_meta('presence', out_file, time.time() - t1, len(libs))
 
 
 def main_ropchains(lib_folder, ropchains_folder):
@@ -655,6 +805,7 @@ def main_ropchains(lib_folder, ropchains_folder):
 
     collector = RopchainRowCollector(out_file)
     collector.save()   # write the header immediately so the checkpoint exists
+    _make_cache(ropchain_files, 'ropchains')
 
     try:
         run_tasks(libs, ropchain_files, _ropchains_lib_worker, collector)
@@ -671,6 +822,7 @@ def main_ropchains(lib_folder, ropchains_folder):
         print(df.sort_values(['library', 'chain']).to_string(index=False))
     print(f"\nSaved to {out_file!r}")
     print(f"Completed in {time.time() - t1:.2f} seconds")
+    _write_run_meta('ropchains', out_file, time.time() - t1, len(libs))
 
 
 if __name__ == "__main__":
@@ -732,6 +884,21 @@ if __name__ == "__main__":
         help='number of parallel worker processes (default: 4; ignored with --sequential)',
     )
     arg_parser.add_argument(
+        '--no-cache', action='store_true', default=False,
+        help='do not read or write the per-library result cache (see '
+             "utils/benchcache.py). Config key: 'cache: false'.",
+    )
+    arg_parser.add_argument(
+        '--refresh-cache', action='store_true', default=False,
+        help='re-measure every library, overwriting its cache entry instead of '
+             'reusing it. Use after changing the binaries under a libraries folder.',
+    )
+    arg_parser.add_argument(
+        '--cache-dir', type=str, default=None, metavar='DIR',
+        help="result cache directory (default: .benchcache/ beside this script; "
+             "a relative path is taken from there too). Config key: 'cache_dir'.",
+    )
+    arg_parser.add_argument(
         '--depth', type=int, default=None, metavar='N',
         help='override the search depth in bytes for ALL architectures. Without it, '
              "the config's per-architecture 'depth' map is used (default: 10; with "
@@ -763,6 +930,20 @@ if __name__ == "__main__":
     ROPBLOCK   = args.ropblock   if args.ropblock   is not None else bool(config.get('ropblock', False))
     SEQUENTIAL = args.sequential if args.sequential is not None else bool(config.get('sequential', False))
     WORKERS    = args.workers    if args.workers    is not None else int(config.get('workers', 4))
+
+    # --- Provenance + result cache ------------------------------------------
+    CONFIG_PATH   = config_path
+    CACHE_ENABLED = (not args.no_cache) and bool(config.get('cache', True))
+    CACHE_REFRESH = bool(args.refresh_cache)
+    _cache_dir    = args.cache_dir or config.get('cache_dir')
+    if _cache_dir and not os.path.isabs(_cache_dir):
+        # Relative to this script, not to the cwd: experiments/run_all.py runs
+        # every config from its own results/<name>/ directory, and one cache
+        # per experiment would defeat the point.
+        _cache_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), _cache_dir)
+    CACHE_DIR     = _cache_dir
+    MACHINE       = machine_specs.load() if machine_specs else None
+    ROP3_COMMIT   = benchcache.rop3_commit(rop3_folder) if benchcache else None
     ropchains  = args.ropchains  or config.get('ropchains')
     mode       = str(config.get('mode', '')).lower()
     presence   = args.presence   if args.presence   is not None \
@@ -813,6 +994,21 @@ if __name__ == "__main__":
         GADFINDER_DEPTH = DEPTH_BY_ARCH.get('default', None)
         if GADFINDER_DEPTH is None and not presence:
             GADFINDER_DEPTH = 10
+
+    # Hash the *resolved* settings rather than the file on disk: --jop, --depth,
+    # --chain-timeout and friends change the results without changing the YAML,
+    # and a cache key that ignored them would hand back the wrong answer.
+    CONFIG = dict(config)
+    CONFIG.update({
+        'jop':           JOP,
+        'ropblock':      ROPBLOCK,
+        'workers':       WORKERS,
+        'sequential':    SEQUENTIAL,
+        'chain_timeout': CHAIN_TIMEOUT,
+        'depth':         dict(DEPTH_BY_ARCH) if DEPTH_BY_ARCH else {'default': GADFINDER_DEPTH},
+        'rop3_flags':    dict(ROP3_KWARGS),
+        'operations':    {'rop': list(ROP_GADGETS), 'jop': list(JOP_GADGETS)},
+    })
 
     if ropchains:
         main_ropchains(libs_spec, ropchains)

@@ -16,8 +16,8 @@ depth:
   default: null
   x86:     10
   x86_64:  10
-  aarch64: 24
-  riscv64: 24
+  aarch64: 50
+  riscv64: 50
 
 rop3_flags:          # matches experiments/lib_multiarch_rop.yaml
   ret_imm: false

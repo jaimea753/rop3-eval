@@ -8,6 +8,8 @@ on:
       - "experiments/*.yaml"
       - "utils/heatmap.py"
       - "utils/build_site.py"
+      - "utils/machine_specs.py"
+      - "machine.yaml"
       - ".github/workflows/publish-results.yml"
   workflow_dispatch:
 

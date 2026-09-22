@@ -49,6 +49,18 @@ chain_timeout: null
 workers: 4
 sequential: false
 
+# Reuse results this machine already measured instead of re-running them.
+# An entry is keyed on the machine id (machine.yaml / utils/machine_specs.py),
+# the rop3 submodule commit, a hash of the scan parameters below, and the task
+# list -- but NOT on the contents of the binaries, since `libraries` names a
+# folder. Swap a binary under an unchanged filename and you must invalidate by
+# hand: --refresh-cache, or `python utils/benchcache.py --clear`. Overridable
+# with --no-cache / --refresh-cache.
+cache: true
+# Where entries live. A relative path is taken from the repo root, not from
+# the working directory. Overridable with --cache-dir.
+cache_dir: .benchcache
+
 # Search depth in BYTES, per architecture. Keys: x86, x86_64, aarch64, riscv64
 # (plus 'default' for any arch not listed). A value of null means "use the
 # architecture's own built-in default". A command-line --depth overrides every

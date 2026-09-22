@@ -1,0 +1,17 @@
+id: e5051135e7ec
+label: nixos
+collected: '2026-09-22'
+cpu:
+  model: Intel(R) Core(TM) i5-7300U CPU @ 2.60GHz
+  arch: x86_64
+  cores: 2
+  threads: 4
+memory:
+  total_gib: 7.6
+os:
+  name: NixOS
+  version: 26.05 (Yarara) [build 26.05.20260920.6d663c0]
+  kernel: 6.18.52
+virtualization: null
+python: 3.13.15
+notes: null

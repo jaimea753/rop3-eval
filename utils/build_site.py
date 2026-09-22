@@ -5,7 +5,10 @@ Build a static site out of results/<experiment>/*.tsv for GitHub Pages.
 For every result TSV under --results-dir, renders a heatmap PNG (reusing
 load_matrix()/make_heatmap() from utils/heatmap.py) and copies the raw TSV,
 then emits a single index.html grouping them by experiment (the results/
-subdirectory name). A TSV that doesn't fit the heatmap model (e.g. ropchains
+subdirectory name). The page opens with the benchmark machine (machine.yaml),
+and an experiment that recorded its own provenance (results/<experiment>/
+run-meta.yaml, written by run-experiments.py) gets a note under its heading --
+including its own machine block when it ran somewhere other than machine.yaml. A TSV that doesn't fit the heatmap model (e.g. ropchains
 output, which is boolean-valued) still gets a card with a download link, just
 without a preview image.
 
@@ -27,6 +30,7 @@ import yaml
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from heatmap import load_matrix, make_heatmap  # noqa: E402
+import machine_specs  # noqa: E402
 
 PAGE_TEMPLATE = """<!doctype html>
 <html lang="en">
@@ -64,12 +68,30 @@ PAGE_TEMPLATE = """<!doctype html>
   table.results .badge {{ font-size: 0.78rem; color: #888;
                           font-family: ui-monospace, monospace; }}
   table.results tbody tr:hover td {{ background: #8881; }}
+  section.machine {{ border: 1px solid #8884; border-radius: 8px;
+                     padding: 1rem 1.25rem; background: #8881; margin: 1.5rem 0; }}
+  section.machine h2 {{ margin: 0 0 0.4rem; border: none; padding: 0;
+                        font-size: 0.8rem; text-transform: uppercase;
+                        letter-spacing: 0.08em; color: #888; }}
+  .machine-label {{ margin: 0 0 0.9rem; }}
+  .muted {{ color: #888; font-weight: 400; }}
+  dl.specs {{ display: grid; margin: 0;
+              grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+              gap: 0.1rem 1.5rem; }}
+  dl.specs dt {{ font-size: 0.72rem; text-transform: uppercase;
+                 letter-spacing: 0.05em; color: #888; }}
+  dl.specs dd {{ margin: 0 0 0.6rem; font-variant-numeric: tabular-nums; }}
+  .machine-notes {{ color: #888; font-size: 0.9rem; white-space: pre-line;
+                    margin: 0.9rem 0 0; }}
+  .provenance {{ color: #888; font-size: 0.82rem; margin: 0.4rem 0 1rem;
+                 font-family: ui-monospace, monospace; }}
 </style>
 </head>
 <body>
 <h1>rop3-eval results</h1>
 <p class="sub">ROP / JOP / ROPBLOCK gadget-search results across the analyzed
 binary corpus.</p>
+{machine}
 {sections}
 </body>
 </html>
@@ -77,6 +99,7 @@ binary corpus.</p>
 
 SECTION_TEMPLATE = """<section>
 <h2>{name}</h2>
+{provenance}
 {cards}
 </section>
 """
@@ -108,6 +131,55 @@ def experiment_title(exp_name, experiments_dir):
         except Exception as exc:
             print(f"  [WARN] could not read {config_path}: {exc}", file=sys.stderr)
     return exp_name.replace("_", " ").replace("-", " ").strip().title()
+
+
+def experiment_provenance(exp_dir, site_machine):
+    """Provenance note for one experiment, from results/<exp>/run-meta.yaml.
+
+    run-experiments.py writes that file beside the TSV it produced. Timings are
+    only comparable within one machine, so an experiment whose machine differs
+    from the site-wide machine.yaml gets its own full spec block rather than a
+    one-liner.
+    """
+    meta_path = Path(exp_dir) / "run-meta.yaml"
+    if not meta_path.is_file():
+        return ""
+    try:
+        with open(meta_path) as f:
+            meta = yaml.safe_load(f) or {}
+    except Exception as exc:
+        print(f"  [WARN] could not read {meta_path}: {exc}", file=sys.stderr)
+        return ""
+    if not isinstance(meta, dict):
+        return ""
+
+    bits = []
+    generated = str(meta.get("generated") or "")[:10]
+    if generated:
+        bits.append(f"run {generated}")
+    commit = meta.get("rop3_commit")
+    if commit:
+        bits.append(f"rop3 {str(commit)[:8]}")
+    if meta.get("config_hash"):
+        bits.append(f"config {meta['config_hash']}")
+    elapsed = meta.get("elapsed_seconds")
+    if elapsed is not None:
+        bits.append(f"{float(elapsed):.0f}s")
+    reused, libraries = meta.get("reused_from_cache"), meta.get("libraries")
+    if reused:
+        bits.append(f"{reused}/{libraries} libraries reused from cache")
+
+    machine = meta.get("machine") or {}
+    label = machine.get("label") or machine.get("id")
+    differs = bool(machine) and machine.get("id") != (site_machine or {}).get("id")
+    if label and not differs:
+        bits.append(f"on {label}")
+
+    note = ('<p class="provenance">' + " · ".join(html.escape(b) for b in bits) + "</p>"
+            if bits else "")
+    if differs:
+        note += machine_specs.render_html(machine, heading="Machine for this experiment")
+    return note
 
 
 ROPCHAIN_COLS = {"library", "chain", "found", "seconds"}
@@ -212,12 +284,20 @@ def render_experiment(exp_dir, out_dir, exp_name):
     return cards
 
 
-def build(results_dir, out_dir, experiments_dir="experiments"):
+def build(results_dir, out_dir, experiments_dir="experiments",
+          machine_file=machine_specs.DEFAULT_MACHINE_FILE):
     results_dir = Path(results_dir)
     out_dir = Path(out_dir)
     if out_dir.exists():
         shutil.rmtree(out_dir)
     out_dir.mkdir(parents=True)
+
+    site_machine = machine_specs.load(machine_file)
+    if site_machine is None:
+        print(f"[WARN] no machine specs at {machine_file}; the site will not say "
+              "which machine produced these timings "
+              "(generate one with `python utils/machine_specs.py --write`)",
+              file=sys.stderr)
 
     exp_dirs = sorted(p for p in results_dir.iterdir() if p.is_dir())
     if not exp_dirs:
@@ -232,10 +312,14 @@ def build(results_dir, out_dir, experiments_dir="experiments"):
             continue
         title = experiment_title(exp_name, experiments_dir)
         sections.append(SECTION_TEMPLATE.format(
-            name=html.escape(title), cards="\n".join(cards)))
+            name=html.escape(title),
+            provenance=experiment_provenance(exp_dir, site_machine),
+            cards="\n".join(cards)))
 
     index_path = out_dir / "index.html"
-    index_path.write_text(PAGE_TEMPLATE.format(sections="\n".join(sections)))
+    index_path.write_text(PAGE_TEMPLATE.format(
+        machine=machine_specs.render_html(site_machine),
+        sections="\n".join(sections)))
     print(f"Wrote {index_path} ({len(sections)} experiment section(s))")
 
 
@@ -247,10 +331,13 @@ def main(argv=None):
                      help="directory holding experiments/<experiment>.yaml configs, "
                           "used to look up each experiment's `name:` for its section "
                           "heading (default: experiments)")
+    ap.add_argument("--machine-file", default=str(machine_specs.DEFAULT_MACHINE_FILE),
+                     help="YAML describing the benchmark machine, rendered at the top "
+                          "of the page (default: machine.yaml at the repo root)")
     ap.add_argument("--out", default="_site",
                      help="output directory for the built site (default: _site)")
     args = ap.parse_args(argv)
-    build(args.results_dir, args.out, args.experiments_dir)
+    build(args.results_dir, args.out, args.experiments_dir, args.machine_file)
     return 0
 
 

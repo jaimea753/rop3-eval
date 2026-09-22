@@ -3,3 +3,5 @@
 *.pdf
 !results/**/*.tsv
 _site/
+# Per-library result cache (machine-specific; utils/benchcache.py)
+.benchcache/

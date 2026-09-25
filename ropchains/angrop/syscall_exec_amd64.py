@@ -8,4 +8,4 @@ picking the arch-correct syscall number itself.
 
 
 def build(project, rop):
-    return rop.execve(path="/bin/sh")
+    return rop.execve(path=b"/bin/sh")

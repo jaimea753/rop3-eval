@@ -4,8 +4,8 @@
 # Unlike the run-experiments.py configs, this one is consumed by the standalone
 # comparator:  python compare-tools.py --config experiments/compare_ropchains.yaml
 # Results land in results/compare_ropchains/results_compare.tsv (long format:
-# tool, library, arch, chain, found, seconds, status) and auto-appear on the
-# site built by utils/build_site.py.
+# tool, library, arch, chain, found, seconds, extract_seconds, status) and
+# auto-appear on the site built by utils/build_site.py.
 # ---------------------------------------------------------------------------
 
 name: rop3 vs ropper vs angrop — ROP-chain construction
@@ -33,9 +33,15 @@ ropchains: ./ropchains
 # recipe for aarch64/riscv (those (angrop, binary) pairs are logged [skip]).
 tools: [rop3, ropper, angrop]
 
-# Per-chain construction timeout in seconds (null/0 = unlimited). Applies to
-# every tool: rop3 via SIGALRM, ropper/angrop via their subprocess timeout.
-chain_timeout: 60
+# Gadget loading and chain construction are timed and bounded SEPARATELY, so a
+# slow full-libc load can't eat the construction budget. `load_timeout` bounds
+# gadget loading (the longer budget); `chain_timeout` bounds the chain search.
+# Both in seconds, null/0 = unlimited. rop3 (in-process) and angrop (in its
+# worker) honour the split; ropper's --chain CLI is atomic, so its extract time
+# is empty and it runs under the SUM of the two budgets. A load-phase timeout is
+# recorded status=load-timeout, a construction-phase one status=timeout.
+load_timeout:  1800
+chain_timeout: 300
 
 # rop3 project folder (must contain rop3.py). Defaults to the ./rop3 submodule.
 rop3: ./rop3

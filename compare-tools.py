@@ -19,13 +19,18 @@ angrop: no riscv, no turing) so the comparison matrix stays complete instead of
 silently sparse.
 
 Output: results/<config-stem>/results_compare.tsv, long format
-    tool  library  arch  chain  found  seconds  status
+    tool  library  arch  chain  found  seconds  extract_seconds  status
 plus run-meta.yaml recording all three tool versions and the machine block.
 
-Measurement note: `seconds` is each tool's own binary->chain work — rop3
-gadgets()+search (in-process), angrop find_gadgets()+build() (self-reported by
-the worker, excluding interpreter startup), ropper the CLI wall time. Every tool
-reloads the binary per chain, so the numbers are cold-start and comparable.
+Measurement note: gadget loading and chain construction are timed and bounded
+separately. `extract_seconds` is the tool's gadget-loading cost (rop3 gadgets(),
+angrop find_gadgets(), both self-reported cold-start; empty for ropper, whose
+--chain CLI is a single atomic call that cannot be split). `seconds` is the
+chain-construction/search cost only for rop3/angrop, and the full load+build
+wall time for ropper. Loading is bounded by `load_timeout` and construction by
+`chain_timeout`; a load-phase timeout is recorded status=load-timeout, a
+construction-phase timeout status=timeout. Every tool reloads the binary per
+chain, so the numbers are cold-start and comparable.
 
 Usage:
     python compare-tools.py --config experiments/compare_ropchains.yaml
@@ -87,6 +92,20 @@ class _Timeout(Exception):
 
 def _alarm(signum, frame):
     raise _Timeout()
+
+
+def _arm(timeout):
+    """Arm a one-shot SIGALRM `timeout` seconds out (no-op if falsy). Returns
+    whether an alarm was armed, so the caller knows to disarm in finally."""
+    if not timeout:
+        return False
+    signal.signal(signal.SIGALRM, _alarm)
+    signal.setitimer(signal.ITIMER_REAL, timeout)
+    return True
+
+
+def _disarm():
+    signal.setitimer(signal.ITIMER_REAL, 0)
 
 
 def _apply_memory_limit():
@@ -167,24 +186,47 @@ def _ensure_rop3(rop3_folder):
         return False
 
 
-def run_rop3(lib_item, chain, depth_map, rop3_flags, timeout):
+def run_rop3(lib_item, chain, depth_map, rop3_flags, load_timeout, chain_timeout):
+    """Load gadgets under `load_timeout`, then search under `chain_timeout`, timing
+    each phase separately. Returns (found, extract_seconds, seconds, status,
+    chain_text): a load-phase timeout is status=load-timeout (extract measured,
+    seconds None); a construction-phase timeout is status=timeout."""
     if not _rop3_mods:
-        return False, None, "error"
+        return False, None, None, "error", ""
     api, rc = _rop3_mods["api"], _rop3_mods["rc"]
     from rop3.arch import arch_singleton
     arch_singleton.reset()
     depth = _resolve_depth(depth_map, chain["arch"])
+
+    # --- Load phase: Rop3() + gadgets() ------------------------------------
     t0 = time.perf_counter()
+    armed = False
+    try:
+        armed = _arm(load_timeout)
+        rop = api.Rop3(lib_item["files"], depth=depth, rop=True, jop=False,
+                       ropblock=False, **rop3_flags)
+        rop.gadgets()
+    except _Timeout:
+        return False, round(time.perf_counter() - t0, 4), None, "load-timeout", ""
+    except MemoryError:
+        print(f"  [WARN] rop3 × {chain['chain']} × {lib_item['name']}: OOM (load)",
+              file=sys.stderr)
+        return False, round(time.perf_counter() - t0, 4), None, "error", ""
+    except Exception as exc:
+        print(f"  [WARN] rop3 × {chain['chain']} × {lib_item['name']}: "
+              f"{type(exc).__name__}: {exc} (load)", file=sys.stderr)
+        return False, round(time.perf_counter() - t0, 4), None, "error", ""
+    finally:
+        if armed:
+            _disarm()
+    extract_seconds = round(time.perf_counter() - t0, 4)
+
+    # --- Build phase: ropchain() search ------------------------------------
+    t1 = time.perf_counter()
     armed = False
     chain_text = ""
     try:
-        rop = api.Rop3(lib_item["files"], depth=depth, rop=True, jop=False,
-                       ropblock=False, **rop3_flags)
-        if timeout:
-            signal.signal(signal.SIGALRM, _alarm)
-            signal.setitimer(signal.ITIMER_REAL, timeout)
-            armed = True
-        rop.gadgets()
+        armed = _arm(chain_timeout)
         # The yielded solution is the resolved chain (a list[Gadget]); render it
         # via Gadget.__str__ so the actual chain is recorded, not just its cost.
         sol = next(rop.ropchain(chain["rop3_file"]))
@@ -195,32 +237,37 @@ def run_rop3(lib_item, chain, depth_map, rop3_flags, timeout):
     except _Timeout:
         found, status = False, "timeout"
     except MemoryError:
-        print(f"  [WARN] rop3 × {chain['chain']} × {lib_item['name']}: OOM",
+        print(f"  [WARN] rop3 × {chain['chain']} × {lib_item['name']}: OOM (build)",
               file=sys.stderr)
         found, status = False, "error"
     except Exception as exc:
         print(f"  [WARN] rop3 × {chain['chain']} × {lib_item['name']}: "
-              f"{type(exc).__name__}: {exc}", file=sys.stderr)
+              f"{type(exc).__name__}: {exc} (build)", file=sys.stderr)
         found, status = False, "error"
     finally:
         if armed:
-            signal.setitimer(signal.ITIMER_REAL, 0)
-    return found, round(time.perf_counter() - t0, 4), status, chain_text
+            _disarm()
+    return found, extract_seconds, round(time.perf_counter() - t1, 4), status, chain_text
 
 
-def run_ropper(ropper_bin, lib_item, spec_file, timeout):
+def run_ropper(ropper_bin, lib_item, spec_file, load_timeout, chain_timeout):
+    """ropper's --chain CLI loads gadgets and builds the chain in one atomic
+    invocation, so load and build cannot be timed or bounded separately: its
+    extract_seconds is always None and `seconds` is the full load+build wall
+    time, bounded by the *sum* of the two budgets. Returns
+    (found, None, seconds, status, chain_text)."""
     with open(spec_file) as f:
         chain_arg = f.read().strip()
     cmd = [ropper_bin, "--file", lib_item["files"][0], "--chain", chain_arg,
            "--nocolor"]
+    budget = (load_timeout or 0) + (chain_timeout or 0) or None
     t0 = time.perf_counter()
     try:
-        p = subprocess.run(cmd, capture_output=True, text=True,
-                           timeout=timeout or None)
+        p = subprocess.run(cmd, capture_output=True, text=True, timeout=budget)
     except subprocess.TimeoutExpired:
-        return False, round(time.perf_counter() - t0, 4), "timeout", ""
+        return False, None, round(time.perf_counter() - t0, 4), "timeout", ""
     except FileNotFoundError:
-        return False, None, "error", ""     # ropper not installed
+        return False, None, None, "error", ""     # ropper not installed
     secs = round(time.perf_counter() - t0, 4)
     # ropper exits 0 even when it cannot build a chain (e.g. execve on x86_64,
     # which this version reports as a "future feature"), so trust its explicit
@@ -230,11 +277,11 @@ def run_ropper(ropper_bin, lib_item, spec_file, timeout):
     blob = (stdout + "\n" + (p.stderr or "")).lower()
     ok = "rop chain generated" in blob
     if not ok:
-        return False, secs, "not-found", ""
+        return False, None, secs, "not-found", ""
     # On success ropper printed the assembled chain (a python payload snippet)
     # ahead of the sentinel; keep that as the recorded chain text.
     chain_text = _ropper_chain_text(stdout)
-    return True, secs, "found", chain_text
+    return True, None, secs, "found", chain_text
 
 
 def _ropper_chain_text(stdout):
@@ -258,29 +305,32 @@ def _last_json_line(text):
     return None
 
 
-def run_angrop(venv_python, lib_item, spec_file, timeout):
+def run_angrop(venv_python, lib_item, spec_file, load_timeout, chain_timeout):
     cmd = [venv_python, os.path.join(HERE, "utils", "angrop_worker.py"),
            "--binary", lib_item["files"][0], "--spec", spec_file,
-           "--timeout", str(int(timeout or 0))]
-    # Outer guard well above the worker's own SIGALRM so a hung interpreter is
-    # still reaped; the worker reports 'timeout' itself under normal operation.
-    outer = (timeout + 120) if timeout else None
+           "--load-timeout", str(int(load_timeout or 0)),
+           "--build-timeout", str(int(chain_timeout or 0))]
+    # Outer guard well above the worker's own watchdogs so a hung interpreter is
+    # still reaped; the worker reports 'timeout'/'load-timeout' itself normally.
+    budget = (load_timeout or 0) + (chain_timeout or 0)
+    outer = (budget + 120) if budget else None
     t0 = time.perf_counter()
     try:
         p = subprocess.run(cmd, capture_output=True, text=True, timeout=outer)
     except subprocess.TimeoutExpired:
-        return False, round(time.perf_counter() - t0, 4), "timeout", ""
+        return False, None, round(time.perf_counter() - t0, 4), "timeout", ""
     except FileNotFoundError:
-        return False, None, "error", ""     # venv python missing
+        return False, None, None, "error", ""     # venv python missing
     res = _last_json_line(p.stdout)
     if res is None:
         if p.stderr:
             print(f"  [WARN] angrop worker gave no result: "
                   f"{p.stderr.strip().splitlines()[-1] if p.stderr.strip() else '?'}",
                   file=sys.stderr)
-        return False, None, "error", ""
-    return (bool(res.get("found")), res.get("seconds"),
-            res.get("status", "error"), res.get("chain", "") or "")
+        return False, None, None, "error", ""
+    return (bool(res.get("found")), res.get("extract_seconds"),
+            res.get("seconds"), res.get("status", "error"),
+            res.get("chain", "") or "")
 
 
 # --- Tool versions (provenance + cache key) ---------------------------------
@@ -323,7 +373,7 @@ def _tsv_escape(s):
 
 class RowCollector:
     COLUMNS = ["tool", "library", "arch", "chain", "found", "seconds",
-               "status", "chain_text"]
+               "extract_seconds", "status", "chain_text"]
 
     def __init__(self, out_file):
         self.out_file = out_file
@@ -335,13 +385,16 @@ class RowCollector:
             self.rows.append({
                 "tool": r["tool"], "library": lib_name, "arch": arch,
                 "chain": r["chain"], "found": r["found"],
-                "seconds": r["seconds"], "status": r["status"],
+                "seconds": r["seconds"], "extract_seconds": r.get("extract_seconds"),
+                "status": r["status"],
                 "chain_text": _tsv_escape(r.get("chain_text", "")),
             })
             mark = "✓" if r["found"] else "✗"
             secs = "n/a" if r["seconds"] is None else f"{r['seconds']:.2f}s"
+            ext = r.get("extract_seconds")
+            load = "" if ext is None else f", load {ext:.2f}s"
             print(f"    {mark}  {r['tool']:<7} {lib_name} × {r['chain']}: "
-                  f"{r['status']} ({secs})", flush=True)
+                  f"{r['status']} ({secs}{load})", flush=True)
 
     def save(self):
         df = pd.DataFrame(self.rows, columns=self.COLUMNS)
@@ -360,7 +413,8 @@ def process_library(lib_item, chains, tools, cfg):
     arch_key = _binary_arch_key(lib_item)
     depth_map = cfg["depth"]
     rop3_flags = cfg["rop3_flags"]
-    timeout = cfg["chain_timeout"]
+    load_timeout = cfg["load_timeout"]
+    chain_timeout = cfg["chain_timeout"]
     rows = []
     for chain in chains:
         # Only run a chain against binaries of its architecture (arch-agnostic
@@ -370,21 +424,26 @@ def process_library(lib_item, chains, tools, cfg):
             continue
         for tool in tools:
             chain_text = ""
+            extract_secs = None
             if tool == "rop3":
-                found, secs, status, chain_text = run_rop3(
-                    lib_item, chain, depth_map, rop3_flags, timeout)
+                found, extract_secs, secs, status, chain_text = run_rop3(
+                    lib_item, chain, depth_map, rop3_flags,
+                    load_timeout, chain_timeout)
             else:
                 f = tool_file(cfg["ropchains"], tool, chain["chain"])
                 if f is None:
                     found, secs, status = False, None, "unsupported"
                 elif tool == "ropper":
-                    found, secs, status, chain_text = run_ropper(
-                        cfg["ropper_bin"], lib_item, f, timeout)
+                    found, extract_secs, secs, status, chain_text = run_ropper(
+                        cfg["ropper_bin"], lib_item, f,
+                        load_timeout, chain_timeout)
                 else:  # angrop
-                    found, secs, status, chain_text = run_angrop(
-                        cfg["venv_python"], lib_item, f, timeout)
+                    found, extract_secs, secs, status, chain_text = run_angrop(
+                        cfg["venv_python"], lib_item, f,
+                        load_timeout, chain_timeout)
             rows.append({"tool": tool, "chain": chain["chain"],
-                         "found": found, "seconds": secs, "status": status,
+                         "found": found, "seconds": secs,
+                         "extract_seconds": extract_secs, "status": status,
                          "chain_text": chain_text})
     return {"arch": arch_key or "unknown", "rows": rows}
 
@@ -461,6 +520,9 @@ DEFAULTS = {
     # angr/angrop come from requirements.txt (pip, see shell.nix), so angrop is
     # a first-class tool. Drop it from a config's tools: to skip it.
     "tools": ["rop3", "ropper", "angrop"],
+    # Gadget loading and chain construction are bounded separately: loading gets
+    # the longer budget so a slow full-libc load can't starve the search.
+    "load_timeout": 1800,
     "chain_timeout": 1800,
     "depth": {"default": None, "x86": 10, "x86_64": 10,
               "aarch64": 50, "riscv64": 50},
@@ -500,7 +562,12 @@ def main(argv=None):
                     help="YAML config (see experiments/compare_ropchains.yaml).")
     ap.add_argument("--tools", metavar="LIST",
                     help="comma-separated subset override (rop3,ropper,angrop).")
-    ap.add_argument("--chain-timeout", type=float, default=None, metavar="SEC")
+    ap.add_argument("--load-timeout", type=float, default=None, metavar="SEC",
+                    help="gadget-loading timeout (rop3/angrop; 0 = unlimited). "
+                         "Config key: 'load_timeout'.")
+    ap.add_argument("--chain-timeout", type=float, default=None, metavar="SEC",
+                    help="chain-construction timeout (0 = unlimited). "
+                         "Config key: 'chain_timeout'.")
     ap.add_argument("--limit", type=int, default=None, metavar="N",
                     help="only process the first N binaries (quick smoke test).")
     ap.add_argument("--no-cache", action="store_true")
@@ -518,6 +585,10 @@ def main(argv=None):
     # CLI overrides.
     if args.tools:
         cfg["tools"] = [t.strip() for t in args.tools.split(",") if t.strip()]
+    if args.load_timeout is not None:
+        cfg["load_timeout"] = args.load_timeout or None
+    elif cfg.get("load_timeout") in (0, None):
+        cfg["load_timeout"] = None
     if args.chain_timeout is not None:
         cfg["chain_timeout"] = args.chain_timeout or None
     elif cfg.get("chain_timeout") in (0, None):

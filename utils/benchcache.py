@@ -46,8 +46,8 @@ DEFAULT_CACHE_DIR = REPO_ROOT / ".benchcache"
 # run_all.py feeds the driver a rewritten copy of the config with those paths
 # made absolute, so hashing them would tie the key to the checkout location.
 # Which library is being analysed is part of the key separately, by name.
-SEMANTIC_KEYS = ("mode", "jop", "ropblock", "chain_timeout", "depth",
-                 "rop3_flags", "operations")
+SEMANTIC_KEYS = ("mode", "jop", "ropblock", "load_timeout", "chain_timeout",
+                 "depth", "rop3_flags", "operations")
 # These change measured wall-clock time but not gadget counts, so they only
 # matter for the benchmark mode.
 TIMING_KEYS = ("workers", "sequential")

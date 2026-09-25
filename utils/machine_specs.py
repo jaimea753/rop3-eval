@@ -46,7 +46,7 @@ HAND_WRITTEN = ("label", "notes")
 
 def _read_text(path):
     try:
-        return Path(path).read_text(errors="replace")
+        return Path(path).read_text(encoding="utf-8", errors="replace")
     except OSError:
         return None
 
@@ -220,7 +220,7 @@ def load(path=DEFAULT_MACHINE_FILE):
     if not path.is_file():
         return None
     try:
-        spec = yaml.safe_load(path.read_text()) or {}
+        spec = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     except (OSError, yaml.YAMLError) as exc:
         print(f"[WARN] could not read {path}: {exc}", file=sys.stderr)
         return None
@@ -283,7 +283,7 @@ def _with_comments(body):
 def dump(spec, path=DEFAULT_MACHINE_FILE):
     """Write a machine-spec YAML: documented, in the documented key order."""
     path = Path(path)
-    path.write_text(FILE_HEADER + "\n" + _with_comments(dump_yaml(spec)))
+    path.write_text(FILE_HEADER + "\n" + _with_comments(dump_yaml(spec)), encoding="utf-8")
     return path
 
 

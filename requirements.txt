@@ -16,6 +16,14 @@ PyQt6                   # matplotlib's QtAgg backend; Wayland-native
 # --- comparison tools (compare-tools.py) ----------------------------------
 ropper                  # ropper CLI + module
 angrop                  # pulls angr, claripy, z3-solver, pyvex, cle, unicorn
+angr<10                 # coherence pin: the latest angrop (9.2.x) still does a
+                        #   top-level `import claripy` and targets the angr 9.x
+                        #   API, but declares only an unbounded `Requires: angr`.
+                        #   Left to itself pip pairs it with angr 10 (claripy
+                        #   folded in, z3-solver==5.1) — angrop then fails to
+                        #   import (no standalone claripy) and every angrop row
+                        #   comes back `error`. Cap angr below 10 so the whole
+                        #   9.x stack (angr+angrop+claripy+z3) resolves together.
 
 # --- tests (the submodule's suite: cd rop3 && pytest) ---------------------
 pytest

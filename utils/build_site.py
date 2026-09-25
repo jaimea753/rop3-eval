@@ -80,6 +80,8 @@ PAGE_TEMPLATE = """<!doctype html>
   pre.chain {{ margin: 0; padding: 0.6rem 0.9rem; overflow-x: auto;
                font-family: ui-monospace, monospace; font-size: 0.8rem;
                background: #8881; }}
+  pre.chain .ansi-90 {{ color: #888; }}
+  pre.chain .ansi-93 {{ color: #b58900; }}
   section.machine {{ border: 1px solid #8884; border-radius: 8px;
                      padding: 1rem 1.25rem; background: #8881; margin: 1.5rem 0; }}
   section.machine h2 {{ margin: 0 0 0.4rem; border: none; padding: 0;
@@ -153,7 +155,7 @@ def experiment_title(exp_name, experiments_dir):
     config_path = Path(experiments_dir) / f"{exp_name}.yaml"
     if config_path.is_file():
         try:
-            with open(config_path) as f:
+            with open(config_path, encoding="utf-8") as f:
                 cfg = yaml.safe_load(f) or {}
             name = cfg.get("name")
             if name:
@@ -175,7 +177,7 @@ def experiment_provenance(exp_dir, site_machine):
     if not meta_path.is_file():
         return ""
     try:
-        with open(meta_path) as f:
+        with open(meta_path, encoding="utf-8") as f:
             meta = yaml.safe_load(f) or {}
     except Exception as exc:
         print(f"  [WARN] could not read {meta_path}: {exc}", file=sys.stderr)
@@ -232,13 +234,47 @@ def _decode_chain(value):
     return re.sub(r"\\[\\ntr]", lambda m: _CHAIN_UNESCAPE[m.group(0)], value or "")
 
 
+# rop3 colourises its gadget dump with ANSI SGR codes (grey for the return
+# instruction, yellow for highlights); those raw ESC bytes land verbatim in
+# chain_text and a browser renders them as `[90m…[0m` noise. Map the few codes
+# rop3 emits to <span> classes so the chain reads cleanly and keeps its colour.
+_SGR_RE = re.compile("\033\\[([0-9;]*)m")
+_SGR_CLASS = {"90": "ansi-90", "93": "ansi-93"}
+
+
+def _ansi_to_html(text):
+    """HTML-escape *text* and turn its ANSI SGR sequences into <span> tags: a
+    known colour code opens a span, a reset (`0`, or an empty code) closes every
+    open span, and unrecognised codes are dropped. Any span left open at the end
+    is closed, so the emitted markup is always balanced."""
+    out = []
+    open_spans = 0
+    pos = 0
+    for m in _SGR_RE.finditer(text):
+        out.append(html.escape(text[pos:m.start()]))
+        pos = m.end()
+        codes = [c for c in m.group(1).split(";") if c]
+        if not codes or "0" in codes:          # reset: close everything open
+            out.append("</span>" * open_spans)
+            open_spans = 0
+            continue
+        for code in codes:
+            cls = _SGR_CLASS.get(code)
+            if cls:
+                out.append(f'<span class="{cls}">')
+                open_spans += 1
+    out.append(html.escape(text[pos:]))
+    out.append("</span>" * open_spans)
+    return "".join(out)
+
+
 def _ropchain_table_html(tsv):
     """HTML <table> for a long-format ropchain-benchmark TSV (one row per
     binary×chain pair). Returns None if the TSV isn't that shape, so the caller
     can fall through to the heatmap path. A `chain_text` column (compare-tools)
     is not rendered as a cell; instead each row with a chain gets a toggle that
     reveals the chain in a collapsed detail row (hidden by default)."""
-    with open(tsv, newline="") as f:
+    with open(tsv, newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f, delimiter="\t")
         cols = reader.fieldnames or []
         if not ROPCHAIN_COLS.issubset(cols):
@@ -278,7 +314,7 @@ def _ropchain_table_html(tsv):
         if expandable:
             body_rows.append(
                 f'<tr class="chain-row" hidden><td colspan="{span}">'
-                f'<pre class="chain">{html.escape(chain)}</pre></td></tr>')
+                f'<pre class="chain">{_ansi_to_html(chain)}</pre></td></tr>')
 
     return (
         '<div class="tablewrap"><table class="results">'
@@ -375,7 +411,7 @@ def build(results_dir, out_dir, experiments_dir="experiments",
     index_path.write_text(PAGE_TEMPLATE.format(
         machine=machine_specs.render_html(site_machine),
         sections="\n".join(sections),
-        script=PAGE_SCRIPT))
+        script=PAGE_SCRIPT), encoding="utf-8")
     print(f"Wrote {index_path} ({len(sections)} experiment section(s))")
 
 

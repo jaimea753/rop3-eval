@@ -1,0 +1,21 @@
+# --- analysis engine (the rop3 submodule's own dependencies) ---------------
+-r rop3/requirements.txt
+
+# --- experiment driver / post-processing -----------------------------------
+pandas
+seaborn
+matplotlib
+joblib
+requests
+libarchive-c            # binaries/libc downloaders (ctypes -> libarchive.so)
+zstandard               # binaries/debian/fetch-debs.py: zstd .deb data tarballs
+
+# --- interactive heatmap preview (utils/heatmap.py) ------------------------
+PyQt6                   # matplotlib's QtAgg backend; Wayland-native
+
+# --- comparison tools (compare-tools.py) ----------------------------------
+ropper                  # ropper CLI + module
+angrop                  # pulls angr, claripy, z3-solver, pyvex, cle, unicorn
+
+# --- tests (the submodule's suite: cd rop3 && pytest) ---------------------
+pytest

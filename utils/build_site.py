@@ -18,6 +18,7 @@ import argparse
 import csv
 import html
 import os
+import re
 import shutil
 import sys
 from pathlib import Path
@@ -68,6 +69,17 @@ PAGE_TEMPLATE = """<!doctype html>
   table.results .badge {{ font-size: 0.78rem; color: #888;
                           font-family: ui-monospace, monospace; }}
   table.results tbody tr:hover td {{ background: #8881; }}
+  table.results td.toggle {{ width: 1.4rem; text-align: center;
+                             padding: 0 0.2rem; }}
+  button.chain-toggle {{ font: inherit; cursor: pointer; border: none;
+                         background: none; color: #888; line-height: 1;
+                         padding: 0.1rem 0.3rem; }}
+  button.chain-toggle:hover {{ color: inherit; }}
+  tr.chain-row td {{ padding: 0; white-space: normal; }}
+  tr.chain-row[hidden] {{ display: none; }}
+  pre.chain {{ margin: 0; padding: 0.6rem 0.9rem; overflow-x: auto;
+               font-family: ui-monospace, monospace; font-size: 0.8rem;
+               background: #8881; }}
   section.machine {{ border: 1px solid #8884; border-radius: 8px;
                      padding: 1rem 1.25rem; background: #8881; margin: 1.5rem 0; }}
   section.machine h2 {{ margin: 0 0 0.4rem; border: none; padding: 0;
@@ -93,9 +105,27 @@ PAGE_TEMPLATE = """<!doctype html>
 binary corpus.</p>
 {machine}
 {sections}
+{script}
 </body>
 </html>
 """
+
+# Collapsible ROP-chain rows: one delegated click handler toggles the detail row
+# that follows each toggle button. Injected as a format *value*, so — unlike the
+# CSS above — its braces are NOT doubled.
+PAGE_SCRIPT = """<script>
+document.addEventListener('click', function (e) {
+  var btn = e.target.closest && e.target.closest('.chain-toggle');
+  if (!btn) return;
+  var detail = btn.closest('tr') && btn.closest('tr').nextElementSibling;
+  if (!detail || !detail.classList.contains('chain-row')) return;
+  var opening = detail.hasAttribute('hidden');
+  if (opening) detail.removeAttribute('hidden');
+  else detail.setAttribute('hidden', '');
+  btn.setAttribute('aria-expanded', opening ? 'true' : 'false');
+  btn.textContent = opening ? '\\u25bc' : '\\u25b6';
+});
+</script>"""
 
 SECTION_TEMPLATE = """<section>
 <h2>{name}</h2>
@@ -183,6 +213,8 @@ def experiment_provenance(exp_dir, site_machine):
 
 
 ROPCHAIN_COLS = {"library", "chain", "found", "seconds"}
+CHAIN_COL = "chain_text"        # long, multi-line; shown collapsibly, not inline
+_CHAIN_UNESCAPE = {"\\\\": "\\", "\\n": "\n", "\\t": "\t", "\\r": "\r"}
 
 
 def _fmt_seconds(value):
@@ -194,10 +226,18 @@ def _fmt_seconds(value):
         return "—"
 
 
+def _decode_chain(value):
+    """Reverse compare-tools' _tsv_escape (backslash/tab/CR/LF) in one
+    left-to-right pass, so an escaped backslash never re-triggers a decode."""
+    return re.sub(r"\\[\\ntr]", lambda m: _CHAIN_UNESCAPE[m.group(0)], value or "")
+
+
 def _ropchain_table_html(tsv):
     """HTML <table> for a long-format ropchain-benchmark TSV (one row per
     binary×chain pair). Returns None if the TSV isn't that shape, so the caller
-    can fall through to the heatmap path."""
+    can fall through to the heatmap path. A `chain_text` column (compare-tools)
+    is not rendered as a cell; instead each row with a chain gets a toggle that
+    reveals the chain in a collapsed detail row (hidden by default)."""
     with open(tsv, newline="") as f:
         reader = csv.DictReader(f, delimiter="\t")
         cols = reader.fieldnames or []
@@ -205,13 +245,24 @@ def _ropchain_table_html(tsv):
             return None
         rows = list(reader)
 
+    has_chain = CHAIN_COL in cols
+    display_cols = [c for c in cols if c != CHAIN_COL]
+    span = len(display_cols) + 1        # +1 for the leading toggle column
     # Numeric columns are right-aligned; found renders as a ✓/✗ glyph.
     num_cols = {"seconds", "extract_seconds"}
-    head = "".join(f"<th>{html.escape(c)}</th>" for c in cols)
+    head = ('<th class="toggle"></th>'
+            + "".join(f"<th>{html.escape(c)}</th>" for c in display_cols))
     body_rows = []
     for row in rows:
-        cells = []
-        for c in cols:
+        chain = _decode_chain(row.get(CHAIN_COL, "")) if has_chain else ""
+        expandable = bool(chain.strip())
+        if expandable:
+            cells = ['<td class="toggle"><button type="button" '
+                     'class="chain-toggle" aria-expanded="false" '
+                     'aria-label="Toggle chain">▶</button></td>']
+        else:
+            cells = ['<td class="toggle"></td>']
+        for c in display_cols:
             raw = row.get(c, "")
             if c == "found":
                 yes = str(raw).strip().lower() in ("true", "1", "yes")
@@ -224,6 +275,10 @@ def _ropchain_table_html(tsv):
             else:
                 cells.append(f"<td>{html.escape(str(raw))}</td>")
         body_rows.append("<tr>" + "".join(cells) + "</tr>")
+        if expandable:
+            body_rows.append(
+                f'<tr class="chain-row" hidden><td colspan="{span}">'
+                f'<pre class="chain">{html.escape(chain)}</pre></td></tr>')
 
     return (
         '<div class="tablewrap"><table class="results">'
@@ -319,7 +374,8 @@ def build(results_dir, out_dir, experiments_dir="experiments",
     index_path = out_dir / "index.html"
     index_path.write_text(PAGE_TEMPLATE.format(
         machine=machine_specs.render_html(site_machine),
-        sections="\n".join(sections)))
+        sections="\n".join(sections),
+        script=PAGE_SCRIPT))
     print(f"Wrote {index_path} ({len(sections)} experiment section(s))")
 
 

@@ -266,7 +266,7 @@ def main(argv=None):
         if backend is None:
             print("  [WARN] no interactive GUI backend available (headless or "
                   "no Qt/GTK/Tk); use --pdf to write a file, or install a "
-                  "toolkit (nix-shell provides PyQt6).", file=sys.stderr)
+                  "toolkit (PyQt6 is in requirements.txt).", file=sys.stderr)
             previewing = False
             if not saving:
                 return 1

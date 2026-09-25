@@ -176,6 +176,7 @@ def run_rop3(lib_item, chain, depth_map, rop3_flags, timeout):
     depth = _resolve_depth(depth_map, chain["arch"])
     t0 = time.perf_counter()
     armed = False
+    chain_text = ""
     try:
         rop = api.Rop3(lib_item["files"], depth=depth, rop=True, jop=False,
                        ropblock=False, **rop3_flags)
@@ -184,7 +185,10 @@ def run_rop3(lib_item, chain, depth_map, rop3_flags, timeout):
             signal.setitimer(signal.ITIMER_REAL, timeout)
             armed = True
         rop.gadgets()
-        next(rop.ropchain(chain["rop3_file"]))
+        # The yielded solution is the resolved chain (a list[Gadget]); render it
+        # via Gadget.__str__ so the actual chain is recorded, not just its cost.
+        sol = next(rop.ropchain(chain["rop3_file"]))
+        chain_text = "\n".join(str(g) for g in sol)
         found, status = True, "found"
     except (rc.RopChainNotFound, StopIteration):
         found, status = False, "not-found"
@@ -201,7 +205,7 @@ def run_rop3(lib_item, chain, depth_map, rop3_flags, timeout):
     finally:
         if armed:
             signal.setitimer(signal.ITIMER_REAL, 0)
-    return found, round(time.perf_counter() - t0, 4), status
+    return found, round(time.perf_counter() - t0, 4), status, chain_text
 
 
 def run_ropper(ropper_bin, lib_item, spec_file, timeout):
@@ -214,17 +218,33 @@ def run_ropper(ropper_bin, lib_item, spec_file, timeout):
         p = subprocess.run(cmd, capture_output=True, text=True,
                            timeout=timeout or None)
     except subprocess.TimeoutExpired:
-        return False, round(time.perf_counter() - t0, 4), "timeout"
+        return False, round(time.perf_counter() - t0, 4), "timeout", ""
     except FileNotFoundError:
-        return False, None, "error"     # ropper not installed
+        return False, None, "error", ""     # ropper not installed
     secs = round(time.perf_counter() - t0, 4)
     # ropper exits 0 even when it cannot build a chain (e.g. execve on x86_64,
     # which this version reports as a "future feature"), so trust its explicit
     # success line rather than the return code: on success it prints the chain
     # followed by "[INFO] rop chain generated!".
-    blob = ((p.stdout or "") + "\n" + (p.stderr or "")).lower()
+    stdout = p.stdout or ""
+    blob = (stdout + "\n" + (p.stderr or "")).lower()
     ok = "rop chain generated" in blob
-    return (True, secs, "found") if ok else (False, secs, "not-found")
+    if not ok:
+        return False, secs, "not-found", ""
+    # On success ropper printed the assembled chain (a python payload snippet)
+    # ahead of the sentinel; keep that as the recorded chain text.
+    chain_text = _ropper_chain_text(stdout)
+    return True, secs, "found", chain_text
+
+
+def _ropper_chain_text(stdout):
+    """Extract ropper's printed chain from its --chain stdout: the lines up to
+    (and including) the "rop chain generated" sentinel, trimmed."""
+    lines = stdout.splitlines()
+    for i, line in enumerate(lines):
+        if "rop chain generated" in line.lower():
+            return "\n".join(lines[:i + 1]).strip()
+    return stdout.strip()
 
 
 def _last_json_line(text):
@@ -249,17 +269,18 @@ def run_angrop(venv_python, lib_item, spec_file, timeout):
     try:
         p = subprocess.run(cmd, capture_output=True, text=True, timeout=outer)
     except subprocess.TimeoutExpired:
-        return False, round(time.perf_counter() - t0, 4), "timeout"
+        return False, round(time.perf_counter() - t0, 4), "timeout", ""
     except FileNotFoundError:
-        return False, None, "error"     # venv python missing
+        return False, None, "error", ""     # venv python missing
     res = _last_json_line(p.stdout)
     if res is None:
         if p.stderr:
             print(f"  [WARN] angrop worker gave no result: "
                   f"{p.stderr.strip().splitlines()[-1] if p.stderr.strip() else '?'}",
                   file=sys.stderr)
-        return False, None, "error"
-    return bool(res.get("found")), res.get("seconds"), res.get("status", "error")
+        return False, None, "error", ""
+    return (bool(res.get("found")), res.get("seconds"),
+            res.get("status", "error"), res.get("chain", "") or "")
 
 
 # --- Tool versions (provenance + cache key) ---------------------------------
@@ -290,8 +311,19 @@ def _probe(shell_cmd):
 
 
 # --- Collector --------------------------------------------------------------
+def _tsv_escape(s):
+    """Flatten a multi-line chain into one TSV cell: escape backslash then the
+    structural characters (tab/CR/LF) so every result stays on a single line.
+    utils/build_site.py reverses this before display."""
+    if not s:
+        return ""
+    return (s.replace("\\", "\\\\").replace("\t", "\\t")
+             .replace("\r", "\\r").replace("\n", "\\n"))
+
+
 class RowCollector:
-    COLUMNS = ["tool", "library", "arch", "chain", "found", "seconds", "status"]
+    COLUMNS = ["tool", "library", "arch", "chain", "found", "seconds",
+               "status", "chain_text"]
 
     def __init__(self, out_file):
         self.out_file = out_file
@@ -304,6 +336,7 @@ class RowCollector:
                 "tool": r["tool"], "library": lib_name, "arch": arch,
                 "chain": r["chain"], "found": r["found"],
                 "seconds": r["seconds"], "status": r["status"],
+                "chain_text": _tsv_escape(r.get("chain_text", "")),
             })
             mark = "✓" if r["found"] else "✗"
             secs = "n/a" if r["seconds"] is None else f"{r['seconds']:.2f}s"
@@ -336,21 +369,23 @@ def process_library(lib_item, chains, tools, cfg):
                 and chain["arch"] != arch_key:
             continue
         for tool in tools:
+            chain_text = ""
             if tool == "rop3":
-                found, secs, status = run_rop3(lib_item, chain, depth_map,
-                                               rop3_flags, timeout)
+                found, secs, status, chain_text = run_rop3(
+                    lib_item, chain, depth_map, rop3_flags, timeout)
             else:
                 f = tool_file(cfg["ropchains"], tool, chain["chain"])
                 if f is None:
                     found, secs, status = False, None, "unsupported"
                 elif tool == "ropper":
-                    found, secs, status = run_ropper(cfg["ropper_bin"],
-                                                     lib_item, f, timeout)
+                    found, secs, status, chain_text = run_ropper(
+                        cfg["ropper_bin"], lib_item, f, timeout)
                 else:  # angrop
-                    found, secs, status = run_angrop(cfg["venv_python"],
-                                                     lib_item, f, timeout)
+                    found, secs, status, chain_text = run_angrop(
+                        cfg["venv_python"], lib_item, f, timeout)
             rows.append({"tool": tool, "chain": chain["chain"],
-                         "found": found, "seconds": secs, "status": status})
+                         "found": found, "seconds": secs, "status": status,
+                         "chain_text": chain_text})
     return {"arch": arch_key or "unknown", "rows": rows}
 
 
@@ -423,15 +458,18 @@ def make_cache(cfg, versions, chains, enabled, refresh):
 
 # --- Config -----------------------------------------------------------------
 DEFAULTS = {
-    # angrop is disabled for now (no working native angr/angrop in nixpkgs; see
-    # shell.nix). Re-add "angrop" here (or in the config's tools:) once available.
-    "tools": ["rop3", "ropper"],
+    # angr/angrop come from requirements.txt (pip, see shell.nix), so angrop is
+    # a first-class tool. Drop it from a config's tools: to skip it.
+    "tools": ["rop3", "ropper", "angrop"],
     "chain_timeout": 1800,
     "depth": {"default": None, "x86": 10, "x86_64": 10,
               "aarch64": 50, "riscv64": 50},
     "rop3_flags": {"ret_imm": False, "reg_aliases": False,
                    "keep_contradictory": False, "framed": True, "all": False},
-    "venv_python": "python3",   # only used when 'angrop' is enabled (parked)
+    # Interpreter that runs utils/angrop_worker.py. Defaults to the one running
+    # this driver, which is the .venv python whenever the harness itself is run
+    # from it — override in the config to point angrop at another environment.
+    "venv_python": sys.executable,
     "ropper_bin": "ropper",
     "rop3": os.path.join(HERE, "rop3"),
 }

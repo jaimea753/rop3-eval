@@ -1,18 +1,22 @@
-generated: '2026-09-25T10:01:33+02:00'
+generated: '2026-09-25T13:47:52+02:00'
 results: results_compare.tsv
 mode: compare
 experiment: rop3 vs ropper vs angrop — ROP-chain construction
-config: compare_ropchains-resolved-y1l2opxm.yaml
+config: compare_ropchains-resolved-97ekyvat.yaml
 config_hash: 0a6233a66c970255
 tools:
 - rop3
 - ropper
+- angrop
 tool_versions:
   rop3: ce900e982980b6926c4afb1234ee1e7557613fad-dirty
   ropper: 'Version: Ropper 1.13.13'
-elapsed_seconds: 142.16
+  angr_angrop: ERROR    | 2026-09-25 13:35:17,228 | angr.state_plugins.unicorn_engine
+    | failed loading "unicornlib.so", unicorn support disabled ('NoneType' object
+    has no attribute 'unicorn_py3')
+elapsed_seconds: 754.14
 libraries: 11
-reused_from_cache: 8
+reused_from_cache: 0
 sequential: true
 machine:
   id: e17c5aca4755

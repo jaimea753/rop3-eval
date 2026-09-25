@@ -37,8 +37,18 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 EXPERIMENTS_DIR = REPO_ROOT / "experiments"
 RESULTS_DIR = REPO_ROOT / "results"
 DRIVER = REPO_ROOT / "run-experiments.py"
+# Multi-tool comparison configs (rop3 vs ropper vs angrop) are consumed by a
+# different driver; run-experiments.py wouldn't understand their per-tool
+# ropchains/ layout (it would try to parse ropchains/README.md as a chain).
+COMPARE_DRIVER = REPO_ROOT / "compare-tools.py"
 
 PATH_KEYS = ("libraries", "ropchains", "rop3")
+
+
+def _is_compare_config(cfg):
+    """A config is for compare-tools.py, not run-experiments.py, when it opts in
+    with `driver: compare-tools` or carries the comparison-only `tools:` key."""
+    return cfg.get("driver") == "compare-tools" or "tools" in cfg
 
 
 def _resolve(value):
@@ -100,10 +110,17 @@ def main(argv=None):
             tmp_config_path = tmp.name
 
         try:
-            result = subprocess.run(
-                [sys.executable, str(DRIVER), "--config", tmp_config_path],
-                cwd=out_dir,
-            )
+            if _is_compare_config(cfg):
+                # compare-tools.py writes to --out-dir itself and resolves its
+                # own relative paths, so it is run from REPO_ROOT rather than
+                # with cwd set to the results directory.
+                cmd = [sys.executable, str(COMPARE_DRIVER),
+                       "--config", tmp_config_path, "--out-dir", str(out_dir)]
+                cwd = REPO_ROOT
+            else:
+                cmd = [sys.executable, str(DRIVER), "--config", tmp_config_path]
+                cwd = out_dir
+            result = subprocess.run(cmd, cwd=cwd)
         finally:
             Path(tmp_config_path).unlink(missing_ok=True)
 

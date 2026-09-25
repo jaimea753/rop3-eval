@@ -1,0 +1,51 @@
+tool	library	arch	chain	found	seconds	status
+rop3	libc_debian_aarch64.so	aarch64	mprotect_aarch64	True	9.4931	found
+ropper	libc_debian_aarch64.so	aarch64	mprotect_aarch64	False		unsupported
+rop3	libc_debian_aarch64.so	aarch64	syscall_exec_aarch64	True	9.8648	found
+ropper	libc_debian_aarch64.so	aarch64	syscall_exec_aarch64	False		unsupported
+rop3	libc_debian_amd64.so	x86_64	mprotect_amd64	True	9.2572	found
+ropper	libc_debian_amd64.so	x86_64	mprotect_amd64	True	16.7712	found
+rop3	libc_debian_amd64.so	x86_64	syscall_exec_amd64	True	10.4679	found
+ropper	libc_debian_amd64.so	x86_64	syscall_exec_amd64	False	11.5997	not-found
+rop3	libc_debian_amd64.so	x86_64	turing_amd64	False	14.2841	not-found
+ropper	libc_debian_amd64.so	x86_64	turing_amd64	False		unsupported
+rop3	libc_debian_riscv.so	riscv64	mprotect_riscv	False	11.6793	not-found
+ropper	libc_debian_riscv.so	riscv64	mprotect_riscv	False		unsupported
+rop3	libc_debian_riscv.so	riscv64	syscall_exec_riscv	True	11.8586	found
+ropper	libc_debian_riscv.so	riscv64	syscall_exec_riscv	False		unsupported
+rop3	libc_debian_x86.so	x86	mprotect_x86	True	10.7594	found
+ropper	libc_debian_x86.so	x86	mprotect_x86	True	14.1676	found
+rop3	libc_debian_x86.so	x86	syscall_exec_x86	True	12.7697	found
+ropper	libc_debian_x86.so	x86	syscall_exec_x86	False	12.2062	not-found
+rop3	libmergedlo_debian_aarch64.so	aarch64	mprotect_aarch64	False	60.1973	timeout
+ropper	libmergedlo_debian_aarch64.so	aarch64	mprotect_aarch64	False		unsupported
+rop3	libmergedlo_debian_aarch64.so	aarch64	syscall_exec_aarch64	False	60.1861	timeout
+ropper	libmergedlo_debian_aarch64.so	aarch64	syscall_exec_aarch64	False		unsupported
+rop3	libmergedlo_debian_amd64.so	x86_64	mprotect_amd64	False	60.165	timeout
+ropper	libmergedlo_debian_amd64.so	x86_64	mprotect_amd64	False	60.083	timeout
+rop3	libmergedlo_debian_amd64.so	x86_64	syscall_exec_amd64	False	60.26	timeout
+ropper	libmergedlo_debian_amd64.so	x86_64	syscall_exec_amd64	False	60.1456	timeout
+rop3	libmergedlo_debian_amd64.so	x86_64	turing_amd64	False	60.3808	timeout
+ropper	libmergedlo_debian_amd64.so	x86_64	turing_amd64	False		unsupported
+rop3	libmergedlo_debian_riscv.so	riscv64	mprotect_riscv	False	60.0728	timeout
+ropper	libmergedlo_debian_riscv.so	riscv64	mprotect_riscv	False		unsupported
+rop3	libmergedlo_debian_riscv.so	riscv64	syscall_exec_riscv	False	60.0951	timeout
+ropper	libmergedlo_debian_riscv.so	riscv64	syscall_exec_riscv	False		unsupported
+rop3	zlib1g_aarch64_libz.so.1	aarch64	mprotect_aarch64	False	0.9381	not-found
+ropper	zlib1g_aarch64_libz.so.1	aarch64	mprotect_aarch64	False		unsupported
+rop3	zlib1g_aarch64_libz.so.1	aarch64	syscall_exec_aarch64	False	1.5441	not-found
+ropper	zlib1g_aarch64_libz.so.1	aarch64	syscall_exec_aarch64	False		unsupported
+rop3	zlib1g_amd64_libz.so.1	x86_64	mprotect_amd64	False	8.3137	not-found
+ropper	zlib1g_amd64_libz.so.1	x86_64	mprotect_amd64	True	1.7177	found
+rop3	zlib1g_amd64_libz.so.1	x86_64	syscall_exec_amd64	False	7.6247	not-found
+ropper	zlib1g_amd64_libz.so.1	x86_64	syscall_exec_amd64	False	0.8974	not-found
+rop3	zlib1g_amd64_libz.so.1	x86_64	turing_amd64	False	3.053	not-found
+ropper	zlib1g_amd64_libz.so.1	x86_64	turing_amd64	False		unsupported
+rop3	zlib1g_riscv_libz.so.1	riscv64	mprotect_riscv	False	1.8993	not-found
+ropper	zlib1g_riscv_libz.so.1	riscv64	mprotect_riscv	False		unsupported
+rop3	zlib1g_riscv_libz.so.1	riscv64	syscall_exec_riscv	False	2.1441	not-found
+ropper	zlib1g_riscv_libz.so.1	riscv64	syscall_exec_riscv	False		unsupported
+rop3	zlib1g_x86_libz.so.1	x86	mprotect_x86	False	0.5916	not-found
+ropper	zlib1g_x86_libz.so.1	x86	mprotect_x86	True	0.5031	found
+rop3	zlib1g_x86_libz.so.1	x86	syscall_exec_x86	False	1.3841	not-found
+ropper	zlib1g_x86_libz.so.1	x86	syscall_exec_x86	False	0.3888	not-found

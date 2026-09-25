@@ -1,0 +1,73 @@
+# ---------------------------------------------------------------------------
+# compare-tools.py configuration — rop3 vs ropper vs angrop.
+#
+# Unlike the run-experiments.py configs, this one is consumed by the standalone
+# comparator:  python compare-tools.py --config experiments/compare_ropchains.yaml
+# Results land in results/compare_ropchains/results_compare.tsv (long format:
+# tool, library, arch, chain, found, seconds, status) and auto-appear on the
+# site built by utils/build_site.py.
+# ---------------------------------------------------------------------------
+
+name: rop3 vs ropper vs angrop — ROP-chain construction
+
+# Consumed by compare-tools.py (NOT run-experiments.py). experiments/run_all.py
+# reads this key and dispatches to the right driver.
+driver: compare-tools
+
+# Corpus of target binaries (folder / file / glob / list), same as the other
+# experiments. Each binary's architecture is detected from its header and only
+# chains of that architecture are run against it.
+libraries: ./binaries/debian/binaries
+
+# Root of the per-tool native chain descriptions. Must contain rop3/ (the
+# reference (goal, arch) universe, as ROPLang .txt), and optionally ropper/
+# (.spec) and angrop/ (.py). A (tool, goal, arch) with no file is reported
+# status=unsupported.
+ropchains: ./ropchains
+
+# Which tools to compare. Subset with --tools ... on the CLI.
+# angrop is parked for now — there is no working native angr/angrop in nixpkgs
+# (see shell.nix). Add it back here once available; its chain descriptions
+# (ropchains/angrop/) and worker (utils/angrop_worker.py) are kept ready.
+tools: [rop3, ropper]
+
+# Per-chain construction timeout in seconds (null/0 = unlimited). Applies to
+# every tool: rop3 via SIGALRM, ropper/angrop via their subprocess timeout.
+chain_timeout: 60
+
+# rop3 project folder (must contain rop3.py). Defaults to the ./rop3 submodule.
+rop3: ./rop3
+
+# Interpreter used to run angrop (via utils/angrop_worker.py) — only consulted
+# when 'angrop' is in tools:. Unused while angrop is parked. Point it at whatever
+# Python has angrop importable when you re-enable it.
+venv_python: python3
+
+# ropper executable on PATH (supplied by shell.nix's nixpkgs `ropper`).
+ropper_bin: ropper
+
+# --- rop3-only knobs (ropper/angrop choose their own strategy) --------------
+# Search depth in BYTES per architecture (null = the arch's own default). Fixed-
+# width ISAs need a wider window than x86.
+depth:
+  default: null
+  x86:     10
+  x86_64:  10
+  aarch64: 50
+  riscv64: 50
+
+# Flags passed to the Rop3() constructor (kept in step with the other multi-arch
+# experiments for a like-for-like rop3 baseline).
+rop3_flags:
+  ret_imm: false
+  reg_aliases: false
+  keep_contradictory: false
+  framed: true
+  all: false
+
+# Reuse this machine's previous measurements. The cache key includes all three
+# tool versions (not just the rop3 commit) and the contents of every per-tool
+# chain file. Invalidate with `python utils/benchcache.py --clear` when the
+# binary corpus changes (binary contents are not part of the key). Override with
+# --no-cache / --refresh-cache.
+cache: true

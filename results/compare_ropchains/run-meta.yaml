@@ -1,0 +1,34 @@
+generated: '2026-09-25T10:01:33+02:00'
+results: results_compare.tsv
+mode: compare
+experiment: rop3 vs ropper vs angrop — ROP-chain construction
+config: compare_ropchains-resolved-y1l2opxm.yaml
+config_hash: 0a6233a66c970255
+tools:
+- rop3
+- ropper
+tool_versions:
+  rop3: ce900e982980b6926c4afb1234ee1e7557613fad-dirty
+  ropper: 'Version: Ropper 1.13.13'
+elapsed_seconds: 142.16
+libraries: 11
+reused_from_cache: 8
+sequential: true
+machine:
+  id: e17c5aca4755
+  label: nixos
+  collected: '2026-09-24'
+  cpu:
+    model: AMD Ryzen 5 1600 Six-Core Processor
+    arch: x86_64
+    cores: 6
+    threads: 12
+  memory:
+    total_gib: 15.5
+  os:
+    name: NixOS
+    version: 26.05 (Yarara) [build 26.05.20260924.c508844]
+    kernel: 6.18.53
+  virtualization: null
+  python: 3.12.12
+  notes: null

@@ -1,0 +1,1 @@
+mprotect address=0x1000 size=0x1000

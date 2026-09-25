@@ -1,30 +1,30 @@
-generated: '2026-09-22T10:32:12+02:00'
+generated: '2026-09-25T10:01:34+02:00'
 results: results_presence_rop_binaries.tsv
 mode: presence
 experiment: Debian multi-arch binaries — ROP gadget presence
-config: lib_multiarch_rop-resolved-im82zv2w.yaml
+config: lib_multiarch_rop-resolved-npkze22c.yaml
 config_hash: dc2636d07c5db5f8
-rop3_commit: 16f26ce0936822487645cb4a43053772ded26ed5-dirty
-elapsed_seconds: 248.45
+rop3_commit: ce900e982980b6926c4afb1234ee1e7557613fad-dirty
+elapsed_seconds: 0.02
 libraries: 11
-reused_from_cache: 4
+reused_from_cache: 11
 workers: 4
 sequential: false
 machine:
-  id: e5051135e7ec
+  id: e17c5aca4755
   label: nixos
-  collected: '2026-09-22'
+  collected: '2026-09-24'
   cpu:
-    model: Intel(R) Core(TM) i5-7300U CPU @ 2.60GHz
+    model: AMD Ryzen 5 1600 Six-Core Processor
     arch: x86_64
-    cores: 2
-    threads: 4
+    cores: 6
+    threads: 12
   memory:
-    total_gib: 7.6
+    total_gib: 15.5
   os:
     name: NixOS
-    version: 26.05 (Yarara) [build 26.05.20260920.6d663c0]
-    kernel: 6.18.52
+    version: 26.05 (Yarara) [build 26.05.20260924.c508844]
+    kernel: 6.18.53
   virtualization: null
-  python: 3.13.15
+  python: 3.12.12
   notes: null

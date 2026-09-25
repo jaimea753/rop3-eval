@@ -1,12 +1,12 @@
 library	arch	add	sub	neg	mov	lc	ld	st	xor	and	or	not	eqc	ltc	spa	sps	jmp	gsp
-libmergedlo_debian_riscv.so	RISC-V RV64 (compressed)	8695	44	10	1259	15392	1243	3695	27	195	233	10	0	0	6058	0	0	0
-libc_debian_aarch64.so	AArch64 (ARM64)	266	5	0	144	163	197	155	1	1	1	0	0	5	240	0	0	0
-zlib1g_aarch64_libz.so.1	AArch64 (ARM64)	10	1	0	6	10	10	5	1	0	0	0	0	1	9	0	0	0
-zlib1g_amd64_libz.so.1	x86-64	11	1	0	7	39	0	3	0	0	4	0	0	1	3	0	0	0
-zlib1g_x86_libz.so.1	x86	4	0	1	45	36	10	6	14	1	5	1	0	0	1	0	0	1
-zlib1g_riscv_libz.so.1	RISC-V RV64 (compressed)	37	1	0	10	131	3	14	0	0	0	0	0	0	35	0	0	0
-libmergedlo_debian_aarch64.so	AArch64 (ARM64)	1540	49	1	519	705	989	902	3	7	11	0	33	49	1111	0	0	0
-libc_debian_amd64.so	x86-64	47	17	0	65	157	52	248	2	3	5	0	0	17	26	0	0	0
-libc_debian_riscv.so	RISC-V RV64 (compressed)	601	5	12	187	1762	94	365	1	13	10	0	0	0	532	0	0	0
-libc_debian_x86.so	x86	119	51	15	274	203	111	421	61	51	36	0	578	51	20	0	210	1
-libmergedlo_debian_amd64.so	x86-64	265	50	4	298	1295	359	1042	9	6	35	0	45	50	50	0	896	0
+zlib1g_x86_libz.so.1	x86	48	0	1	47	39	10	6	14	1	5	1	0	0	45	0	45	1
+libc_debian_riscv.so	RISC-V RV64 (compressed)	608	5	12	187	1762	94	365	1	13	10	0	0	0	539	0	557	0
+libmergedlo_debian_amd64.so	x86-64	431	53	4	301	1356	359	1042	9	6	35	0	45	53	518	8	14086	0
+zlib1g_amd64_libz.so.1	x86-64	16	2	0	7	42	0	3	0	0	4	0	0	2	18	2	19	0
+libc_debian_amd64.so	x86-64	119	18	0	65	165	52	248	2	3	5	0	0	18	216	3	1242	0
+libmergedlo_debian_aarch64.so	AArch64 (ARM64)	1692	49	1	520	705	989	902	3	7	11	0	33	49	1263	0	1264	0
+zlib1g_riscv_libz.so.1	RISC-V RV64 (compressed)	37	1	0	10	131	3	14	0	0	0	0	0	0	35	0	35	0
+libc_debian_x86.so	x86	321	53	15	291	222	111	421	62	51	37	0	578	53	224	2	434	1
+libmergedlo_debian_riscv.so	RISC-V RV64 (compressed)	8708	44	10	1259	15392	1243	3695	27	195	233	10	0	0	6071	0	6087	0
+zlib1g_aarch64_libz.so.1	AArch64 (ARM64)	10	1	0	6	10	10	5	1	0	0	0	0	1	9	0	9	0
+libc_debian_aarch64.so	AArch64 (ARM64)	310	5	0	151	163	197	155	1	1	1	0	0	5	284	0	291	0

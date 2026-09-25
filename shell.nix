@@ -1,5 +1,5 @@
+# shell.nix — rop3-eval development environment.
 { pkgs ? import <nixpkgs> {} }:
-
 pkgs.mkShell {
   name = "rop3-eval-env";
 
@@ -17,6 +17,7 @@ pkgs.mkShell {
       joblib
       requests
       libarchive-c
+      ropper
     ]))
     wimlib
   ];

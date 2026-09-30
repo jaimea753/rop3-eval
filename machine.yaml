@@ -1,0 +1,47 @@
+# Benchmark machine of record -- the host that produced results/.
+#
+# Regenerate with `python utils/machine_specs.py --write` (`--print` to just
+# look). Detection fills the hardware/OS fields; `label` and `notes` are
+# hand-written and survive regeneration, as do these comments, which are
+# re-emitted from utils/machine_specs.py on every write.
+#
+# The file is authoritative, not the detector: edit any value by hand if the
+# numbers actually came off a different box than the one you are typing on.
+# utils/build_site.py renders it as the "Benchmark environment" panel on the
+# results site.
+
+# Human-readable name for the machine, shown on the site. Hand-written;
+# never auto-filled from the hostname, since this file is public.
+label: null
+
+# Date these specs were collected (ISO 8601).
+collected: '2026-09-30'
+
+# model/arch come from /proc/cpuinfo, `cores` counts physical cores and
+# `threads` logical CPUs -- the pool's `workers` compete for those.
+cpu:
+  model: Intel(R) Core(TM) i7-6700 CPU @ 3.40GHz
+  arch: x86_64
+  cores: 4
+  threads: 8
+
+# Binary GiB. Workers cap themselves at min(16 GiB, 75% of RAM), so a
+# small number here explains OOM-degraded rows.
+memory:
+  total_gib: 31.2
+
+# Distribution name/version from /etc/os-release.
+os:
+  name: Debian GNU/Linux
+  version: 12 (bookworm)
+
+# Hypervisor name, 'none' on bare metal, null when undetectable.
+# Virtualized timings are noisier -- worth stating plainly.
+virtualization: null
+
+# Python running the driver.
+python: 3.12.14
+
+# Free text: anything a reader needs in order to judge the timings.
+# Hand-written.
+notes: null

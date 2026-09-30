@@ -1,0 +1,55 @@
+# Addition: op1 <- op1 + op2
+add:
+  operands: 2
+  dst: [op1]
+  src: [op1, op2]
+
+  x86:
+    # add op1, op2
+    - steps:
+        - mnemonic: add
+          op1: op1
+          op2: op2
+    # clc ; adc op1, op2   (same gadget)
+    - steps:
+        - - mnemonic: clc
+          - mnemonic: adc
+            op1: op1
+            op2: op2
+
+  arm:
+    - steps:
+        - mnemonic: add
+          op1: op1
+          op2: op1
+          op3: op2
+
+  riscv:
+    # add op1, op1, op2
+    - steps:
+        - mnemonic: add
+          op1: op1
+          op2: op1
+          op3: op2
+    # c.add op1, op2   (op1 <- op1 + op2)
+    - steps:
+        - mnemonic: c.add
+          op1: op1
+          op2: op2
+    # addi op1, op1, imm   (op1 <- op1 + imm; op2 binds to the immediate)
+    - steps:
+        - mnemonic: addi
+          op1: op1
+          op2: op1
+          op3: op2
+    # c.addi op1, imm
+    - steps:
+        - mnemonic: c.addi
+          op1: op1
+          op2: op2
+    # c.addi16sp sp, imm   (sp <- sp + imm; rd is always sp, so this only ever
+    # realizes add(sp, imm) -- i.e. spa/sps).
+    - steps:
+        - mnemonic: c.addi16sp
+          op1: op1
+          op2: op2

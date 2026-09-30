@@ -1,0 +1,146 @@
+'''
+This file is part of rop3 (https://github.com/reverseame/rop3).
+
+rop3 is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+rop3 is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with rop3. If not, see <https://www.gnu.org/licenses/>.
+'''
+
+import capstone
+
+import rop3.gadget as gadget_mod
+from rop3.gadget import heuristic_basic_count
+
+from conftest import make_gadget
+
+
+def test_text_repr_and_equality():
+    g1 = make_gadget(b'\x58\xc3', 0x1000)            # pop rax ; ret
+    g2 = make_gadget(b'\x58\xc3', 0x2000)            # same text, different addr
+    g3 = make_gadget(b'\x5b\xc3', 0x1000)            # pop rbx ; ret
+    assert g1.text_repr == 'pop rax ; ret'
+    assert g1 == g2                                  # equality is text-based
+    assert hash(g1) == hash(g2)
+    assert g1 != g3
+
+
+def test_calculate_side_effects_excludes_dst_src_sp(x64):
+    # inc rcx ; pop rbp ; ret
+    g = make_gadget(b'\x48\xff\xc1\x5d\xc3', 0x1000)
+    g.calculate_side_effects()
+    assert 'rcx' in g.side_regs
+    assert 'rbp' in g.side_regs
+
+
+def test_calculate_side_effects_x86_uses_32bit_names(x86):
+    # inc ecx ; pop ebp ; ret
+    g = make_gadget(b'\x41\x5d\xc3', 0x1000, mode=capstone.CS_MODE_32)
+    g.calculate_side_effects()
+    assert 'ecx' in g.side_regs and 'ebp' in g.side_regs
+    # no 64-bit names leak into a 32-bit context
+    assert not ({'rcx', 'rbp'} & g.side_regs)
+
+
+def test_subsumes(x64):
+    base = make_gadget(b'\x58\xc3', 0x1000)          # pop rax ; ret
+    noisy = make_gadget(b'\x58\x5b\xc3', 0x2000)     # pop rax ; pop rbx ; ret
+    base.side_regs = set()
+    noisy.side_regs = {'rbx'}
+    assert base.subsumes(noisy)
+    assert not noisy.subsumes(base)
+
+
+def test_heuristic_basic_count(x64):
+    g = make_gadget(b'\x58\xc3', 0x1000)
+    g.side_regs = {'rbx'}
+    # 1 side reg (<<2 = 4) + 2 instructions (<<1 = 4)
+    assert heuristic_basic_count(g) == 8
+
+
+def test_str_no_color_when_not_tty(x64, monkeypatch, capsys):
+    ''' Regression for issue #14: no ANSI escapes on non-TTY output. '''
+    monkeypatch.setattr('sys.stdout.isatty', lambda: False, raising=False)
+    g = make_gadget(b'\x48\xff\xc1\xc3', 0x1000)     # inc rcx ; ret
+    g.calculate_side_effects()
+    text = str(g)
+    assert 'modifies' in text
+    assert '\033' not in text
+
+
+def test_colorize_honors_tty_and_no_color(monkeypatch):
+    monkeypatch.setattr('sys.stdout.isatty', lambda: True, raising=False)
+    monkeypatch.delenv('NO_COLOR', raising=False)
+    assert '\033' in gadget_mod._colorize('x')
+    monkeypatch.setenv('NO_COLOR', '1')
+    assert '\033' not in gadget_mod._colorize('x')
+
+
+def test_to_dict(x64):
+    g = make_gadget(b'\x58\xc3', 0x1000)             # pop rax ; ret
+    g.count = 3
+    g.symbol = 'main+0x4'
+    d = g.to_dict()
+    assert d['file'] == 'test'
+    assert d['vaddr'] == '0x1000'
+    assert d['gadget'] == 'pop rax ; ret'
+    assert d['instructions'] == ['pop rax', 'ret']
+    assert d['bytes'] == '58c3'
+    assert d['count'] == 3
+    assert d['symbol'] == 'main+0x4'
+    assert d['modifies'] == []
+
+
+def test_str_includes_symbol(x64):
+    g = make_gadget(b'\xc3', 0x1000)
+    g.symbol = 'func+0x10'
+    assert '<func+0x10>' in str(g)
+
+
+def test_result_clobbered(x64):
+    ''' Gadget.result_clobbered: True when a destination the operation produces
+        is overwritten before the terminator; False otherwise. Mirrors the
+        "contradictory gadget" rejection that operation.py delegates here. '''
+    ok = make_gadget(b'\x48\x01\xd8\xc3', 0x1000)             # add rax, rbx ; ret
+    bad = make_gadget(b'\x48\x01\xd8\x48\x89\xc8\xc3', 0x1010)  # add rax,rbx ; mov rax,rcx ; ret
+    other = make_gadget(b'\x48\x01\xd8\x48\x31\xc9\xc3', 0x1020)  # add rax,rbx ; xor rcx,rcx ; ret
+    spa = make_gadget(b'\x48\x83\xc4\x08\xc3', 0x1030)         # add rsp, 8 ; ret
+
+    # the operation is matched at index 0 (the `add`); rax is its destination
+    assert bad.result_clobbered([0], {'rax'}) is True         # rax overwritten before ret
+    assert ok.result_clobbered([0], {'rax'}) is False         # nothing after the add
+    assert other.result_clobbered([0], {'rax'}) is False      # clobbers rcx, not the dst
+    assert bad.result_clobbered([0], set()) is False          # no destinations to guard
+    # a store's dst (an address reg the matched insns don't write) guards nothing
+    assert bad.result_clobbered([0], {'rsi'}) is False
+    # the terminating ret's own rsp pop is control flow, not a clobber
+    assert spa.result_clobbered([0], {'rsp'}) is False
+
+
+def test_display_repr_dims_frame_instructions(x64, monkeypatch):
+    ''' display_repr colors the frame (prologue/epilogue) instructions and
+        leaves the body plain; text_repr stays uncolored. '''
+    import os, sys
+    g = make_gadget(b'\x58\xc3', 0x1000)             # pop rax ; ret
+    g.frame = (False, True)                          # pop rax = body, ret = frame
+    monkeypatch.setattr(sys.stdout, 'isatty', lambda: True, raising=False)
+    monkeypatch.delenv('NO_COLOR', raising=False)
+    colored = g.display_repr()
+    assert colored == f'pop rax ; {gadget_mod.FRAME_COLOR}ret{gadget_mod.END_COLOR}'
+    assert g.text_repr == 'pop rax ; ret'            # unchanged, uncolored
+
+
+def test_display_repr_plain_without_frame(x64):
+    ''' With no frame mask (a bare synthetic gadget), display_repr is just the
+        plain text. '''
+    g = make_gadget(b'\x58\xc3', 0x1000)
+    g.frame = None
+    assert g.display_repr() == g.text_repr

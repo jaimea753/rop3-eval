@@ -1,0 +1,84 @@
+'''
+This file is part of rop3 (https://github.com/reverseame/rop3).
+
+rop3 is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+rop3 is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with rop3. If not, see <https://www.gnu.org/licenses/>.
+'''
+
+import pefile
+
+import rop3.binary as binary
+
+from rop3.archs.x86_arch import X86_Architecture, X64_Architecture
+from rop3.archs.aarch64_arch import AArch64_Architecture
+
+IMAGE_FILE_MACHINE_I386 = 0x014c
+IMAGE_FILE_MACHINE_AMD64 = 0x8664
+IMAGE_FILE_MACHINE_ARM64 = 0xaa64
+
+IMAGE_SCN_MEM_EXECUTE = 0x20000000
+
+class PE:
+    ''' Parses Windows Portable Executable (PE) '''
+    def __init__(self, data, base):
+        try:
+            self._pe = pefile.PE(data=data, fast_load=True)
+            self._arch = self._parse_arch()
+            if base:
+                base = int(base, 0)
+                self._pe.relocate_image(base)
+        except pefile.PEFormatError as exc:
+            raise binary.BinaryException(str(exc)) from exc
+
+    def _parse_arch(self):
+        if self._pe.FILE_HEADER.Machine == IMAGE_FILE_MACHINE_I386:
+            return X86_Architecture()
+        elif self._pe.FILE_HEADER.Machine == IMAGE_FILE_MACHINE_AMD64:
+            return X64_Architecture()
+        elif self._pe.FILE_HEADER.Machine == IMAGE_FILE_MACHINE_ARM64:
+            return AArch64_Architecture()
+        else:
+            raise binary.BinaryException('PE: Unsupported architecture type in COFF header')
+
+    def get_exec_sections(self):
+        ret = []
+
+        for sec in self._pe.sections:
+            ''' Flag means section contains executable code '''
+            if sec.Characteristics & IMAGE_SCN_MEM_EXECUTE:
+                ret.append({
+                    'name': sec.Name.rstrip(b'\x00').decode('utf-8', 'replace'),
+                    'vaddr': self._pe.OPTIONAL_HEADER.ImageBase + sec.VirtualAddress,
+                    'opcodes': sec.get_data()
+                })
+        return ret
+
+    def get_symbols(self):
+        ''' Best-effort symbols from the export table (names + ordinals),
+            relative to the (possibly relocated) image base. '''
+        ret = []
+        self._pe.parse_data_directories()
+        export_dir = getattr(self._pe, 'DIRECTORY_ENTRY_EXPORT', None)
+        if export_dir is None:
+            return ret
+        image_base = self._pe.OPTIONAL_HEADER.ImageBase
+        for exp in export_dir.symbols:
+            if exp.address:
+                name = exp.name.decode('utf-8', 'replace') if exp.name \
+                    else f'ordinal_{exp.ordinal}'
+                ret.append((image_base + exp.address, name))
+        return ret
+
+    def get_arch(self):
+        return self._arch
+

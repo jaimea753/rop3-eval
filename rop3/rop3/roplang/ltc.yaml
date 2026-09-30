@@ -1,0 +1,21 @@
+# Less-than comparison: flags <- (op1 - op2)
+ltc:
+  operands: 2
+  dst: [REG_FLAGS]
+  src: [op1, op2]
+
+  x86:
+    - steps:
+        - operation: sub
+          op1: op1
+          op2: op2
+
+  arm:
+    - steps:
+        - operation: sub
+          op1: op1
+          op2: op2
+
+  riscv:
+    available: false
+    reason: RISC-V has no condition/carry flags (adc/sbb/rcl do not translate)

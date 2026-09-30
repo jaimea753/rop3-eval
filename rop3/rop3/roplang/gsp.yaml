@@ -1,0 +1,23 @@
+# Get stack pointer: op1 <- REG_SP
+gsp:
+  operands: 1
+  dst: [op1]
+  src: []
+
+  x86:
+    - steps:
+        - operation: mov
+          op1: op1
+          op2: REG_SP
+
+  arm:
+    - steps:
+        - operation: mov
+          op1: op1
+          op2: REG_SP
+
+  riscv:
+    - steps:
+        - operation: mov
+          op1: op1
+          op2: REG_SP

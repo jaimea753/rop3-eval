@@ -1,0 +1,195 @@
+'''
+This file is part of rop3 (https://github.com/reverseame/rop3).
+
+rop3 is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+rop3 is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with rop3. If not, see <https://www.gnu.org/licenses/>.
+'''
+
+import os
+import argparse
+
+import rop3.debug as debug
+import rop3.utils as utils
+import rop3.parser as parser
+import rop3.gadfinder as gadfinder
+
+class ArgumentParser:
+    def __init__(self):
+        self.parser = parser.Parser()
+        description = 'This tool allows you to search for gadgets, operations, and ROP chains using a backtracking algorithm in a tree-like structure'
+        self.argparser = argparse.ArgumentParser(description=description)
+        self.argparser.add_argument('-v', '--version',  action='store_true', help=f'display {utils.TOOL_NAME}\'s version and exit')
+        self.argparser.add_argument('--depth', type=int, metavar='<bytes>', default=None, help='maximum gadget length in bytes (default: architecture-specific)')
+        self.argparser.add_argument('--all', default=False, action='store_true', help='show the same gadget in different addresses')
+        self.argparser.add_argument('--rop', action=argparse.BooleanOptionalAction, help="search for ROP gadgets", default=True)
+        self.argparser.add_argument('--retf', action=argparse.BooleanOptionalAction, help="search for RETF gadgets", default=False)
+        self.argparser.add_argument('--ret-imm', action=argparse.BooleanOptionalAction, default=False, help='include gadgets ending in a `ret <imm>` / `retf <imm>` (disabled by default)')
+        self.argparser.add_argument('--jop', action=argparse.BooleanOptionalAction, help="search for JOP gadgets", default=False)
+        self.argparser.add_argument('--frame', action=argparse.BooleanOptionalAction, default=True, help='framed gadget search (default on): on AArch64/RISC-V keep only gadgets that restore the return address from the stack; no effect on x86')
+        self.argparser.add_argument('--ropblock', action='store_true', default=False, help='abstract-gadget search: find gadgets whose tail branches through a register loaded from the stack and not clobbered (e.g. `pop rax ; ... ; jmp rax`, `ldr x9,[sp] ; ... ; br x9`), x86 `ret` being the degenerate case; runs single-threaded')
+        self.argparser.add_argument('--reg-aliases', action='store_true', default=False, help='allow sub-register aliases (al, ax, eax, ...) to substitute their full register when matching operations; they are then treated as the same register for chain assignment and side effects')
+        self.argparser.add_argument('--allow-undeterministic-gadgets', action='store_true', default=False, help='allow gadgets with conditional branches (e.g. jne) as intermediate instructions')
+        self.argparser.add_argument('--allow-complex-memory-ops', action='store_true', default=False, help='allow gadgets whose first instruction uses complex memory addressing (e.g. [r1*r2], [r1+r2*s+disp])')
+        self.argparser.add_argument('--allow-segment-override', action='store_true', default=False, help='allow gadgets whose first instruction uses a segment override (e.g. gs:[reg], fs:[reg])')
+        self.argparser.add_argument('--keep-contradictory', action='store_true', default=False, help="keep 'contradictory' operation gadgets whose destination register is overwritten before the ret (e.g. `add rax, rbx ; mov rax, rcx ; ret`); by default these are filtered out of --op results")
+        self.argparser.add_argument('--verbose', action='store_true', default=False, help='show progress information (gadget counts, combinations)')
+        self.argparser.add_argument('--binary', type=str, metavar='<file>', nargs='+', help='specify a list of binary path files to analyze')
+        self.argparser.add_argument('--badchar', type=str, metavar='<hex>', nargs='+', help='specify a list of chars to avoid in gadget address')
+        self.argparser.add_argument('--badchar-bytes', type=str, metavar='<hex>', nargs='+', help='specify a list of chars to avoid in gadget opcode bytes')
+        self.argparser.add_argument('--keep-canary-address', action='store_true', default=False, help='do not prefer canary-free addresses (0x00, 0x0a, 0x0d, 0xff) when discarding duplicate gadgets')
+        self.argparser.add_argument('--base', type=str, metavar='<hex>', nargs='+', help='specify a base address to relocate binary files (it may take a while). When you specify more than one base address, you need to provide one address for each binary')
+        self.argparser.add_argument('--arch', type=str, metavar='<name>', default=None, help='select the architecture slice of a fat Mach-O binary (e.g. x86_64, i386)')
+        self.argparser.add_argument('--symbols', action='store_true', default=False, help='annotate gadgets with the nearest symbol (when the binary is not stripped)')
+        self.argparser.add_argument('--output', choices=['text', 'json', 'csv'], default='text', help='output format (default: text)')
+        self.argparser.add_argument('--tuple', action='store_true', default=False, help='print each gadget as the tuple <op_name, op1[, op2], written registers, read registers> (overrides --output text)')
+        self.argparser.add_argument('--op', type=str, metavar='<op>', help='search for operation')
+        self.argparser.add_argument('--operands', type=str, metavar='<reg>', nargs='+', help='operation operands, positionally (op1 op2 op3 ...); e.g. --op mov --operands rdi rax')
+        # LEGACY
+        self.argparser.add_argument('--dst', type=str, metavar='<reg>', default=None, help='[legacy] destination operand; maps to op1 on its own, or op1 when --src is also given. Prefer --operands')
+        # LEGACY
+        self.argparser.add_argument('--src', type=str, metavar='<reg>', default=None, help='[legacy] source operand; maps to op1 on its own, or op2 when --dst is also given. Prefer --operands')
+        self.argparser.add_argument('--ropchain', type=str, metavar='<file>', help='plain text file with a ROP chain')
+        self.argparser.add_argument('--exhaustive', action=argparse.BooleanOptionalAction, help="exhaustive search for ROP chains", default=False)
+        self.argparser.add_argument('--legacy-ropchain', action=argparse.BooleanOptionalAction, default=False,
+            help="use the pre-`free` global register-slot resolution for --ropchain assembly "
+                 "(a generic name, e.g. REG1, is one identity for the whole file); free(NAME) "
+                 "is only approximated by a parse-time rename. Default: off (order-aware "
+                 "resolution, where free(NAME) truly releases NAME)")
+        self.argparser.add_argument('--symbolic', action=argparse.BooleanOptionalAction, default=False,
+            help="validate each assembled --ropchain solution with a Triton-based concolic "
+                 "emulation pass (requires Triton; skipped, never fatal, if it's absent). "
+                 "Reports memory side effects, stack pivots, and reachability. Default: off")
+        self.argparser.add_argument('--interactive', action='store_true', default=False, help='scan the binary once and drop into an interactive prompt')
+        self.argparser.add_argument('--jobs', type=int, metavar='<n>', default=1, help='number of worker processes for the gadget scan (default: 1)')
+        self.argparser.add_argument('--cache', action='store_true', default=False, help='cache discovered gadgets on disk and reuse them on repeated runs over the same file and options')
+        self.argparser.add_argument('--cache-dir', type=str, metavar='<dir>', default=None, help='directory for the gadget cache (default: $XDG_CACHE_HOME/rop3)')
+
+    def parse_args(self, arguments):
+        args = self.argparser.parse_args(arguments)
+
+        self._check_args(args)
+
+        args = self._convert_flags(args)
+        args = self._convert_operands(args)
+        args = self._convert_base(args)
+
+        return args
+
+    def _convert_operands(self, args):
+        '''
+        LEGACY: --dst/--src predate the positional --operands. A lone --dst or
+        --src maps to op1; giving both maps --dst to op1 and --src to op2. Kept
+        for backward compatibility only -- prefer --operands.
+        '''
+        dst = getattr(args, 'dst', None)
+        src = getattr(args, 'src', None)
+        if dst is None and src is None:
+            return args
+
+        debug.warning('--dst/--src are legacy; use --operands (positional: op1 op2 ...) instead')
+
+        if args.operands:
+            debug.error('--dst/--src cannot be combined with --operands')
+
+        if dst is not None and src is not None:
+            args.operands = [dst, src]
+        else:
+            args.operands = [dst if dst is not None else src]
+
+        return args
+
+    def _convert_flags(self, args):
+        '''
+        Transform user provided options to bit flags
+        '''
+        namespace = vars(args)
+        flags = 0
+
+        if args.all:
+            flags |= gadfinder.KEEP_DUPLICATES
+        if args.jop:
+            flags |= gadfinder.JOP
+        if args.rop:
+            flags |= gadfinder.ROP
+        if args.retf:
+            flags |= gadfinder.RETF
+        if args.allow_undeterministic_gadgets:
+            flags |= gadfinder.ALLOW_UNDETERMINISTIC
+        if args.allow_complex_memory_ops:
+            flags |= gadfinder.ALLOW_COMPLEX_MEM
+        if args.allow_segment_override:
+            flags |= gadfinder.ALLOW_SEGMENT_OVERRIDE
+        if not args.keep_canary_address:
+            flags |= gadfinder.AVOID_CANARY
+        if args.ret_imm:
+            flags |= gadfinder.ALLOW_RET_IMM
+        if args.reg_aliases:
+            flags |= gadfinder.ALLOW_REG_ALIASES
+        if args.keep_contradictory:
+            flags |= gadfinder.KEEP_CONTRADICTORY
+        if not args.frame:
+            flags |= gadfinder.UNFRAMED
+        if args.ropblock:
+            flags |= gadfinder.ROPBLOCK
+
+        namespace['flags'] = flags
+
+        return args
+
+    def _convert_base(self, args):
+        ''' Replicate one base for all binaries '''
+        if not args.version:
+            base_addresses = args.base
+            if not base_addresses:      # None
+                base_addresses = [args.base] * len(args.binary)
+            elif len(args.base) == 1:   # Just one base
+                base_addresses = args.base * len(args.binary)
+
+            args.base = base_addresses
+
+        return args
+
+    def _check_args(self, args):
+        if not (args.version or args.binary):
+            debug.error('You need to provide a binary (--binary or --help)')
+
+        if args.base:
+            if len(args.binary) != len(args.base):
+                if len(args.base) != 1:
+                    debug.error(f'Number of binaries ({len(args.binary)}) does not match number of addresses ({len(args.base)}) (--help)')
+
+            for baddr in args.base:
+                self._check_int_value(baddr)
+
+        for option in (args.badchar, args.badchar_bytes):
+            if not option:
+                continue
+            for badchar in option:
+                value = self._check_int_value(badchar)
+                if value < 0x00 or value > 0xff:
+                    debug.error(f'{badchar}: bad char must be one byte (range 0x00-0xff)')
+
+        if args.jobs is not None and args.jobs < 1:
+            debug.error(f'--jobs must be >= 1 (got {args.jobs})')
+
+        if args.ropchain:
+            ropchain_filename = os.path.abspath(args.ropchain)
+            if not os.path.isfile(ropchain_filename):
+                debug.error(f'{ropchain_filename}: File not found (--help)')
+
+    def _check_int_value(self, value):
+        try:
+            ''' With base 0, it tries to infer the integer type based in prefix '''
+            return int(value, 0)
+        except ValueError:
+            debug.error(f'{value}: value not recognized')

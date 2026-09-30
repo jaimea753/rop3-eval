@@ -1,0 +1,38 @@
+# Subtraction: op1 <- op1 - op2
+sub:
+  operands: 2
+  dst: [op1]
+  src: [op1, op2]
+
+  x86:
+    # sub op1, op2
+    - steps:
+        - mnemonic: sub
+          op1: op1
+          op2: op2
+    # clc ; sbb op1, op2   (same gadget)
+    - steps:
+        - - mnemonic: clc
+          - mnemonic: sbb
+            op1: op1
+            op2: op2
+
+  arm:
+    - steps:
+        - mnemonic: sub
+          op1: op1
+          op2: op1
+          op3: op2
+
+  riscv:
+    # sub op1, op1, op2
+    - steps:
+        - mnemonic: sub
+          op1: op1
+          op2: op1
+          op3: op2
+    # c.sub op1, op2   (op1 <- op1 - op2)
+    - steps:
+        - mnemonic: c.sub
+          op1: op1
+          op2: op2

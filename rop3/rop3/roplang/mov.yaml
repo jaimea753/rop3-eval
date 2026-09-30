@@ -1,0 +1,84 @@
+# Move: op1 <- op2
+mov:
+  operands: 2
+  dst: [op1]
+  src: [op2]
+
+  x86:
+    # mov op1, op2
+    - steps:
+        - mnemonic: mov
+          op1: op1
+          op2: op2
+    # push op2 ; pop op1
+    - steps:
+        - - mnemonic: push
+            op1: op2
+          - mnemonic: pop
+            op1: op1
+    # xchg op1, op2
+    - steps:
+        - mnemonic: xchg
+          op1: op1
+          op2: op2
+    # xor op1, op1 ; add op1, op2
+    - steps:
+        - - mnemonic: xor
+            op1: op1
+            op2: op1
+          - mnemonic: add
+            op1: op1
+            op2: op2
+    # xor op1, op1 ; not op1 ; and op1, op2
+    - steps:
+        - - mnemonic: xor
+            op1: op1
+            op2: op1
+          - mnemonic: not
+            op1: op1
+          - mnemonic: and
+            op1: op1
+            op2: op2
+    # clc ; cmovae op1, op2
+    - steps:
+        - - mnemonic: clc
+          - mnemonic: cmovae
+            op1: op1
+            op2: op2
+    # stc ; cmovb op1, op2
+    - steps:
+        - - mnemonic: stc
+          - mnemonic: cmovb
+            op1: op1
+            op2: op2
+
+  arm:
+    # AArch64 register move (capstone renders `orr xd, xzr, xn` as `mov`).
+    - steps:
+        - mnemonic: mov
+          op1: op1
+          op2: op2
+
+  riscv:
+    # mv op1, op2   ==   addi op1, op2, 0  (capstone renders the pseudo)
+    - steps:
+        - mnemonic: mv
+          op1: op1
+          op2: op2
+    # c.mv op1, op2
+    - steps:
+        - mnemonic: c.mv
+          op1: op1
+          op2: op2
+    # add op1, zero, op2
+    - steps:
+        - mnemonic: add
+          op1: op1
+          op2: zero
+          op3: op2
+    # or op1, op2, zero
+    - steps:
+        - mnemonic: or
+          op1: op1
+          op2: op2
+          op3: zero

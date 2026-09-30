@@ -1,0 +1,30 @@
+# Bitwise NOT: op1 <- ~op1
+not:
+  operands: 1
+  dst: [op1]
+  src: [op1]
+
+  x86:
+    # not op1
+    - steps:
+        - mnemonic: not
+          op1: op1
+    # TODO: Make this arch-dependent
+    # xor op1, 0xffffffff
+    # - steps:
+    #     - mnemonic: xor
+    #       op1: op1
+    #       op2: '0xffffffff'
+
+  arm:
+    - steps:
+        - mnemonic: mvn
+          op1: op1
+          op2: op1
+
+  riscv:
+    # not op1, op1   ==   xori op1, op1, -1  (capstone renders the pseudo)
+    - steps:
+        - mnemonic: not
+          op1: op1
+          op2: op1

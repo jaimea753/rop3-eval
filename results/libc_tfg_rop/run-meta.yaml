@@ -1,0 +1,27 @@
+generated: '2026-09-30T12:11:46+02:00'
+results: results_rop_libc.tsv
+mode: ops
+experiment: libc — ROP gadget counts
+config: libc_tfg_rop-resolved-vmgh9ceb.yaml
+config_hash: 7f7ba0754ba39704
+rop3_commit: 16f26ce0936822487645cb4a43053772ded26ed5
+elapsed_seconds: 29.03
+libraries: 20
+reused_from_cache: 0
+workers: 4
+sequential: false
+machine:
+  collected: '2026-09-30'
+  cpu:
+    model: Intel(R) Core(TM) i7-6700 CPU @ 3.40GHz
+    arch: x86_64
+    cores: 4
+    threads: 8
+  memory:
+    total_gib: 31.2
+  os:
+    name: Debian GNU/Linux
+    version: 12 (bookworm)
+  virtualization: null
+  python: 3.12.14
+  notes: null

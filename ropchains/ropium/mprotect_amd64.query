@@ -1,0 +1,1 @@
+sys_mprotect(0x1000, 0x1000, 7)

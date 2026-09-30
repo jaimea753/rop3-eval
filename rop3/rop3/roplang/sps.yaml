@@ -1,0 +1,23 @@
+# Stack pointer subtraction: SP <- SP - op1 (compound: reuses sub)
+sps:
+  operands: 1
+  dst: []
+  src: [op1]
+
+  x86:
+    - steps:
+        - operation: sub
+          op1: REG_SP
+          op2: op1
+
+  arm:
+    - steps:
+        - operation: sub
+          op1: REG_SP
+          op2: op1
+
+  riscv:
+    - steps:
+        - operation: sub
+          op1: REG_SP
+          op2: op1

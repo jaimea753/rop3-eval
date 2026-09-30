@@ -1,0 +1,39 @@
+# Store to memory: [op1] <- op2
+st:
+  operands: 2
+  dst: [op1]
+  src: [op2]
+
+  x86:
+    - steps:
+        - mnemonic: mov
+          op1: '[op1]'
+          op2: op2
+
+  arm:
+    - steps:
+        - mnemonic: str
+          op1: op2
+          op2: '[op1]'
+
+  riscv:
+    # sd op2, off(op1)   (store op2 into [op1]; RV64 doubleword store)
+    - steps:
+        - mnemonic: sd
+          op1: op2
+          op2: '[op1]'
+    - steps:
+        - mnemonic: sw
+          op1: op2
+          op2: '[op1]'
+    # Compressed stores render as (src, off, base): src=op2, base=op1.
+    - steps:
+        - mnemonic: c.sd
+          op1: op2
+          op2: ANY
+          op3: op1
+    - steps:
+        - mnemonic: c.sw
+          op1: op2
+          op2: ANY
+          op3: op1

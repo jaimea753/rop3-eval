@@ -1,0 +1,188 @@
+# Which of the KnownDLLs (the system libraries the OS loader pre-maps into
+# every process, HKLM\SYSTEM\CurrentControlSet\Control\Session
+# Manager\KnownDLLs) to fetch from https://winbindex.m417z.com, and which
+# exact build to pin for each architecture.
+#
+# Winbindex indexes PE metadata (not the binaries themselves), keyed by the
+# file's own sha256, under
+#   https://winbindex.m417z.com/data/by_filename_compressed/<name>.json.gz
+# Every real binary is served straight off Microsoft's public symbol server.
+# Each entry below pins a `version` (informational -- the fileVersion string)
+# and the `sha256` that identifies that exact build in winbindex's index for
+# <name>; winbindex_downloaders.py looks that key up at runtime to read the
+# build's PE timestamp/virtualSize, builds the symbol-server URL
+# (msdl.microsoft.com/download/symbols/<name>/<timestamp><size>/<name>),
+# downloads it, and verifies the result hashes back to the pinned sha256.
+#
+# aarch64: winbindex only crawls x64 cumulative-update packages
+# (`updates_architecture = 'x64'` in its own data/config.py) -- those also
+# carry the x86 WoW64 copies of these files, but never the separate ARM64
+# update packages. As of this writing it has zero native aarch64 builds
+# indexed for any KnownDLL (verified directly against its data: every
+# by_filename_compressed/<name>.json.gz below has only machineType 332
+# (x86) and 34404 (amd64) entries, never 43620 (arm64)). There is nothing
+# real to pin here until winbindex gains ARM64 coverage, so no aarch64
+# builds are listed below; add them the same way once it does.
+downloads:
+  - name: ntdll.dll
+    architectures:
+      x86:
+        version: "10.0.28000.2804"
+        sha256: d0e1a910ae2f0f43ca7b49a5a3c4cedef391eb773f86c3a968a014512cfda246
+      amd64:
+        version: "10.0.28000.2605"
+        sha256: 3d81dd129892ff3743bcc3281efb85d36bb5e547cd5112ea51130c0e75b36305
+
+  - name: kernel32.dll
+    architectures:
+      x86:
+        version: "10.0.28000.2804"
+        sha256: 7f2cbbf9e529320aa0e1809193238ef88547f81ae957b5bbbdf22f0620ec6025
+      amd64:
+        version: "10.0.28000.2952"
+        sha256: 41a84aa76de132ca9e5e2ad22e2cc207f91836731258e78fc758c4bf026aec76
+
+  - name: kernelbase.dll
+    architectures:
+      x86:
+        version: "10.0.28000.2704"
+        sha256: f07cec7e799d403e809aa33ed7c0ef3d7401b1c234929e9acdb319827327e30d
+      amd64:
+        version: "10.0.28000.2704"
+        sha256: 349da4ff4881ec5622ab13bd15371c1ea40db73e28a327ef56446dfc2604ab5e
+
+  - name: user32.dll
+    architectures:
+      x86:
+        version: "10.0.28000.2804"
+        sha256: 45c468aa1fd53e5353fba6409649f72a0cac1593964cd774f80233a6aafa7aa8
+      amd64:
+        version: "10.0.28000.2605"
+        sha256: e9c2cf21094f1c67cf8b08c1e4125689cef0a37046468b6dbd18aa9873f8128a
+
+  - name: gdi32.dll
+    architectures:
+      x86:
+        version: "10.0.28000.2804"
+        sha256: c7c9bfd432fb6ab2312040e189ce4c6433f50c39803381a58457b3247d717845
+      amd64:
+        version: "10.0.28000.2804"
+        sha256: b6d9accac4178a7686e6c096ddebdefa62710da9136785a5ac5230de764b4160
+
+  - name: gdi32full.dll
+    architectures:
+      x86:
+        version: "10.0.28000.2704"
+        sha256: 37d51f82eb2e2fb0c13a1f1bf3be78a5f423b69d49a723ed059ff7a4e4b98edb
+      amd64:
+        version: "10.0.28000.2704"
+        sha256: 4391d0a3714a4427d76113b77f03a4eeec0b4e5f0c5a8c34dc59529130909074
+
+  - name: advapi32.dll
+    architectures:
+      x86:
+        version: "10.0.28000.2804"
+        sha256: 6d07c5ee8d641af0b1214e751e74e8dc79084c8b9636aa0db09c2ca58ac3fa0b
+      amd64:
+        version: "10.0.28000.2804"
+        sha256: 9c6fb09d4dd815f07fceef3cf9ea74a27ec5eacf1ac64e515dc3d814b6485379
+
+  - name: rpcrt4.dll
+    architectures:
+      x86:
+        version: "10.0.28000.2704"
+        sha256: 6f8bb0ffced5f2cedb3b16863eb4467a85ca7cd062a1306662178958816103e0
+      amd64:
+        version: "10.0.28000.2704"
+        sha256: bc1bbbe3a18b9450ac48140e2bd96de3e8ebde7d70d0ed6a0e30a06f62bb2168
+
+  - name: sechost.dll
+    architectures:
+      x86:
+        version: "10.0.28000.2804"
+        sha256: 101291b9a1c982477b015fd79bd1482ce9913e3e07cbd874effa69b7dca35534
+      amd64:
+        version: "10.0.28000.2804"
+        sha256: 8119fe9046711bfc363516c2ccf1060982f9f34a4238c91d8f273151e328e116
+
+  - name: ucrtbase.dll
+    architectures:
+      x86:
+        version: "10.0.28000.2605"
+        sha256: b6bfcf55784910d3d8749b06089955bec931b16950a3af21783136fe7061af90
+      amd64:
+        version: "10.0.28000.2605"
+        sha256: 7017b358ad18d336a2090e6b44dc4d32fc06d6635894d8d14d5f2a7e24d6dc84
+
+  - name: win32u.dll
+    architectures:
+      x86:
+        version: "10.0.28000.2525"
+        sha256: f33490265fbaa44ee8eda119f37ac72784c50dbf1493840ea7113542575fdcd1
+      amd64:
+        version: "10.0.28000.2704"
+        sha256: 34528a6876be4d79ac4136b02de7c178e0f091f96c759d8c7dcdc63d46a0c86f
+
+  - name: msvcrt.dll
+    architectures:
+      x86:
+        version: "7.0.28000.2525"
+        sha256: d4e7472d09ed9f6608c19689cb517ab06d7b508ba0ef75a99fbfd86deb73a90c
+      amd64:
+        version: "7.0.28000.2952"
+        sha256: 8c23355b8e55b60c5edd7629841893a9248208903782696636b29d4ff63f0dee
+
+  - name: ole32.dll
+    architectures:
+      x86:
+        version: "10.0.28000.2804"
+        sha256: ff869a0e3a6962cb321f8cbcc75e300241543cbc12fcc18efedb3030db882221
+      amd64:
+        version: "10.0.28000.2952"
+        sha256: b8cfee39830dc68cf32bdb855c25e90389f711836ea997581883e53e84514e08
+
+  - name: oleaut32.dll
+    architectures:
+      x86:
+        version: "10.0.28000.2804"
+        sha256: 381881b58918409f06926795bb1d78eea570c3649579d3cdfcbded52e60f1d11
+      amd64:
+        version: "10.0.28000.2804"
+        sha256: 39a543c5722ff26212b3f96fc3724b93de9db11eb80a22fa4898f4eb6d65814c
+
+  - name: shell32.dll
+    architectures:
+      x86:
+        version: "10.0.28000.2804"
+        sha256: 0e5220a0bcb89cef864ff5d8c4f0930e51b5bcb35fb26f94f98ba593b60f88af
+      amd64:
+        version: "10.0.28000.2804"
+        sha256: b0d99ad8f8dabd2d0624c8961b7f15ddfc0be8156a60c43e4021754741c4fcff
+
+  - name: shlwapi.dll
+    architectures:
+      x86:
+        version: "10.0.28000.2804"
+        sha256: 2c671592b417eae6e77255616e7964352db49d49eaaba7a531490ff738a1b426
+      amd64:
+        version: "10.0.28000.2605"
+        sha256: 28cc4699142d9e77fddf90877703a6ffca33388e698b4bafc4667899e2962ea6
+
+  - name: ws2_32.dll
+    architectures:
+      x86:
+        version: "10.0.28000.2804"
+        sha256: 06e79c705e1c72960a95b2b9b1926365c2c5d29271a3622d7e076115ffc748e5
+      amd64:
+        version: "10.0.28000.2605"
+        sha256: 71e3c190fb3408f0b7531dc456e5be8b70f255c331ca6426a5737f80ba0fa4fe
+
+  - name: combase.dll
+    architectures:
+      x86:
+        version: "10.0.28000.2804"
+        sha256: 9af9827e0b272ed1ac9413df14fe63d9f7bd6e685f644790dfbc8b6c72075ccd
+      amd64:
+        version: "10.0.28000.2952"
+        sha256: 8c2935519efed9d47a62c44768e04f079e49aa9e1c507f234b8f9c32a9ee9c23
+

@@ -46,6 +46,7 @@ import glob
 import importlib.util
 import json
 import os
+import re
 import signal
 import subprocess
 import sys
@@ -286,7 +287,25 @@ def run_ropper(ropper_bin, lib_item, spec_file, load_timeout, chain_timeout):
     # On success ropper printed the assembled chain (a python payload snippet)
     # ahead of the sentinel; keep that as the recorded chain text.
     chain_text = _ropper_chain_text(stdout)
+    # ...but "rop chain generated!" is not proof of a complete chain: when a
+    # required gadget is missing, ropper's generators splice a placeholder
+    # comment into the payload (e.g. "# ADD HERE SYSCALL GADGET") and still
+    # declare success. Such a scaffold is not realizable -- count it not-found.
+    if _ropper_incomplete(chain_text):
+        return False, None, secs, "not-found", chain_text
     return True, None, secs, "found", chain_text
+
+
+# Placeholder comments ropper writes in place of a gadget it could not find
+# (ropper/ropchain/arch/ropchainx86{,_64}.py): "# ADD HERE SYSCALL GADGET",
+# "# ADD HERE JMP ESP", "# INSERT SYSCALL GADGET HERE", "# Add here PUSHAD
+# gadget!". All follow the convention "<ADD|INSERT> ... HERE" in a comment.
+_ROPPER_PLACEHOLDER = re.compile(r"#\s*(?:add|insert)\b.*\bhere\b", re.I)
+
+
+def _ropper_incomplete(chain_text):
+    """True when ropper's printed chain still carries a missing-gadget placeholder."""
+    return bool(_ROPPER_PLACEHOLDER.search(chain_text or ""))
 
 
 def _ropper_chain_text(stdout):

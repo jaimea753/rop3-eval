@@ -1,16 +1,17 @@
-generated: '2026-09-30T12:14:39+02:00'
+generated: '2026-09-30T16:43:01+02:00'
 results: results_presence_rop_windows.tsv
 mode: presence
 experiment: Windows DLLs — ROP gadget presence
-config: win_rop-resolved-eouk42ep.yaml
+config: win_rop-resolved-icb5a45f.yaml
 config_hash: aee25868aa917e83
-rop3_commit: 16f26ce0936822487645cb4a43053772ded26ed5
-elapsed_seconds: 68.81
+rop3_commit: null
+elapsed_seconds: 68.9
 libraries: 51
 reused_from_cache: 0
 workers: 4
 sequential: false
 machine:
+  label: null
   collected: '2026-09-30'
   cpu:
     model: Intel(R) Core(TM) i7-6700 CPU @ 3.40GHz

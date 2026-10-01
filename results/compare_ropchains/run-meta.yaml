@@ -1,22 +1,25 @@
-generated: '2026-09-30T12:00:02+02:00'
+generated: '2026-09-30T16:27:58+02:00'
 results: results_compare.tsv
 mode: compare
 experiment: rop3 vs ropper vs angrop vs ropium vs pwntools — ROP-chain construction
-config: compare_ropchains-resolved-vu3iyyec.yaml
+config: compare_ropchains-resolved-0unr782n.yaml
 config_hash: 8d0dc5facdfa1b3e
 tools:
 - rop3
 - ropper
 - pwntools
+- angrop
 tool_versions:
-  rop3: 16f26ce0936822487645cb4a43053772ded26ed5
+  rop3: null
   ropper: 'Version: Ropper 1.13.13'
+  angr_angrop: angrop 9.2.12.post3 angr 9.3.4
   pwntools: pwntools 4.15.0
-elapsed_seconds: 2830.07
+elapsed_seconds: 10093.25
 libraries: 11
 reused_from_cache: 0
 sequential: true
 machine:
+  label: null
   collected: '2026-09-30'
   cpu:
     model: Intel(R) Core(TM) i7-6700 CPU @ 3.40GHz

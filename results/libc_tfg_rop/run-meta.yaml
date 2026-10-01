@@ -1,16 +1,17 @@
-generated: '2026-09-30T12:11:46+02:00'
+generated: '2026-09-30T16:40:07+02:00'
 results: results_rop_libc.tsv
 mode: ops
 experiment: libc — ROP gadget counts
-config: libc_tfg_rop-resolved-vmgh9ceb.yaml
+config: libc_tfg_rop-resolved-d6mqjd3s.yaml
 config_hash: 7f7ba0754ba39704
-rop3_commit: 16f26ce0936822487645cb4a43053772ded26ed5
-elapsed_seconds: 29.03
+rop3_commit: null
+elapsed_seconds: 29.52
 libraries: 20
 reused_from_cache: 0
 workers: 4
 sequential: false
 machine:
+  label: null
   collected: '2026-09-30'
   cpu:
     model: Intel(R) Core(TM) i7-6700 CPU @ 3.40GHz

@@ -34,7 +34,7 @@ ropchains: ./ropchains
 # pwntools covers x86/x86_64/aarch64. A (tool, chain) pair with no recipe file is
 # reported status=unsupported, so the matrix stays complete.
 #tools: [rop3, ropper, angrop, ropium, pwntools]
-tools: [rop3, ropper, pwntools]
+tools: [rop3, ropper, pwntools, angrop]
 
 # Gadget loading and chain construction are timed and bounded SEPARATELY, so a
 # slow full-libc load can't eat the construction budget. `load_timeout` bounds

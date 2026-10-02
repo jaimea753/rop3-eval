@@ -58,6 +58,9 @@ TOOL_COLORS = {
 OTHER_TOOL_COLOR = "#898781"
 
 INK, MUTED, GRID = "#0b0b0b", "#52514e", "#e1e0d9"
+# Searches that ran to completion; everything else is purged from the size
+# charts' median/mean as an outlier.
+COMPLETED = ("found", "not-found")
 TIME_FLOOR = 1e-2       # seconds; log-axis floor for near-instant searches
 DODGE = 0.055           # x offset between tools, so stacked markers stay visible
 
@@ -113,6 +116,38 @@ def arch_order(df):
     return sorted(df["arch"].unique(), key=lambda a: (_pretty_arch(a)[0], a))
 
 
+def _time_range(times):
+    """(lo_exp, hi_exp, inf_y): whole decades spanning *times*, and the y
+    position of the ∞ line above them."""
+    lo_exp, hi_exp = -1, 2
+    if len(times):
+        lo_exp = math.floor(math.log10(min(times)))
+        hi_exp = max(math.ceil(math.log10(max(times))), lo_exp + 1)
+    return lo_exp, hi_exp, 10 ** (hi_exp + 0.7)
+
+
+def _style_time_axis(ax, lo_exp, hi_exp, inf_y):
+    """Log seconds axis with an ∞ tick, recessive grid and no box."""
+    ax.set_yscale("log")
+    ax.set_ylim(10 ** lo_exp, inf_y * 10 ** 0.25)
+    ax.yaxis.set_major_locator(FixedLocator(
+        [10.0 ** e for e in range(lo_exp, hi_exp + 1)] + [inf_y]))
+    ax.yaxis.set_major_formatter(FuncFormatter(
+        lambda v, _pos: "∞" if v >= inf_y * 0.99 else f"{v:g}"))
+    ax.yaxis.set_minor_locator(NullLocator())
+    ax.grid(axis="y", color=GRID, lw=0.8, zorder=0)
+    ax.set_axisbelow(True)
+    ax.tick_params(axis="both", length=0, labelcolor=MUTED, labelsize=8.5)
+    for side in ("top", "right", "left"):
+        ax.spines[side].set_visible(False)
+    ax.spines["bottom"].set_color("#c3c2b7")
+
+
+def _tool_handle(tool):
+    return Line2D([], [], color=TOOL_COLORS.get(tool, OTHER_TOOL_COLOR), lw=2,
+                  marker="s", ms=7, mec="white", mew=1, label=tool)
+
+
 def make_compare_chart(df_arch, *, title=None):
     """One figure for one architecture's rows: a panel per binary, chains on x
     (ordered by instruction count), total seconds on a shared log y."""
@@ -129,13 +164,7 @@ def make_compare_chart(df_arch, *, title=None):
     tools = ([t for t in TOOL_COLORS if t in present]
              + sorted(present - set(TOOL_COLORS)))
 
-    # Shared y range: whole decades around the found times, ∞ line above them.
-    found = df_arch.loc[df_arch["ok"], "total"]
-    lo_exp, hi_exp = -1, 2
-    if not found.empty:
-        lo_exp = math.floor(math.log10(found.min()))
-        hi_exp = max(math.ceil(math.log10(found.max())), lo_exp + 1)
-    inf_y = 10 ** (hi_exp + 0.7)
+    lo_exp, hi_exp, inf_y = _time_range(df_arch.loc[df_arch["ok"], "total"])
 
     fig, axes = plt.subplots(1, len(libs), sharey=True, squeeze=False,
                              figsize=(3.4 * len(libs) + 1.4, 4.6))
@@ -177,19 +206,7 @@ def make_compare_chart(df_arch, *, title=None):
         ax.set_xticks(range(len(chain_ids)))
         ax.set_xticklabels(xlabels, fontsize=8.5, color=MUTED)
         ax.set_xlim(-0.5, len(chain_ids) - 0.5)
-        ax.set_yscale("log")
-        ax.set_ylim(10 ** lo_exp, inf_y * 10 ** 0.25)
-        ax.yaxis.set_major_locator(FixedLocator(
-            [10.0 ** e for e in range(lo_exp, hi_exp + 1)] + [inf_y]))
-        ax.yaxis.set_major_formatter(FuncFormatter(
-            lambda v, _pos: "∞" if v >= inf_y * 0.99 else f"{v:g}"))
-        ax.yaxis.set_minor_locator(NullLocator())
-        ax.grid(axis="y", color=GRID, lw=0.8, zorder=0)
-        ax.set_axisbelow(True)
-        ax.tick_params(axis="both", length=0, labelcolor=MUTED, labelsize=8.5)
-        for side in ("top", "right", "left"):
-            ax.spines[side].set_visible(False)
-        ax.spines["bottom"].set_color("#c3c2b7")
+        _style_time_axis(ax, lo_exp, hi_exp, inf_y)
 
     axes[0][0].set_ylabel("total time: load + search (s)", color=MUTED, fontsize=9)
     fig.supxlabel("ROP chain, by number of ROPLang instructions",
@@ -197,8 +214,7 @@ def make_compare_chart(df_arch, *, title=None):
     if title:
         fig.suptitle(title, fontsize=13, fontweight="bold", color=INK)
 
-    handles = [Line2D([], [], color=TOOL_COLORS.get(t, OTHER_TOOL_COLOR), lw=2,
-                      marker="s", ms=7, mec="white", mew=1, label=t) for t in tools]
+    handles = [_tool_handle(t) for t in tools]
     shown = df_arch[df_arch["tool"].isin(tools)]
     if (~shown["ok"] & (shown["status"] != "unsupported")).any():
         handles.append(Line2D([], [], ls="none", marker="s", ms=7, mfc="white",
@@ -215,6 +231,120 @@ def make_compare_chart(df_arch, *, title=None):
     return fig
 
 
+def load_sizes(tsv, binaries_dir=None):
+    """{library: bytes}. Read from `library_bytes` in the run-meta.yaml beside
+    the TSV (compare-tools.py records it; the corpus itself is gitignored), then
+    filled in from files under *binaries_dir* for anything missing there."""
+    sizes = {}
+    meta = os.path.join(os.path.dirname(os.path.abspath(tsv)), "run-meta.yaml")
+    if os.path.isfile(meta):
+        import yaml
+        with open(meta, encoding="utf-8") as f:
+            sizes.update((yaml.safe_load(f) or {}).get("library_bytes") or {})
+    if binaries_dir and os.path.isdir(binaries_dir):
+        for name in os.listdir(binaries_dir):
+            path = os.path.join(binaries_dir, name)
+            if name in sizes:
+                continue
+            if os.path.isfile(path):
+                sizes[name] = os.path.getsize(path)
+            elif os.path.isdir(path):       # a bundle: all its files, one target
+                sizes[name] = sum(os.path.getsize(os.path.join(path, f))
+                                  for f in os.listdir(path)
+                                  if os.path.isfile(os.path.join(path, f)))
+    return sizes
+
+
+def _fmt_bytes(n, _pos=None):
+    # Decimal units, so the log axis' decade ticks read 100 kB / 1 MB / 10 MB.
+    for unit, scale in (("GB", 1e9), ("MB", 1e6), ("kB", 1e3)):
+        if n >= scale:
+            return f"{n / scale:g} {unit}"
+    return f"{n:g} B"
+
+
+def size_summary(df, sizes, stat="median"):
+    """One row per (tool, library): binary size and the *stat* ("median" or
+    "mean") of total seconds over that binary's chains.
+
+    Only searches that ran to completion count -- status `found` or
+    `not-found`. Errors, timeouts and load-timeouts are dropped rather than
+    averaged in (their time cells are a cap or a partial measurement, not a
+    result), as are `unsupported` pairs. A tool that was run against a binary
+    but completed no search there gets `time` NaN (drawn on the ∞ line); a
+    tool with no recipe for any of the binary's chains gets no row at all."""
+    df = df[(df["status"] != "unsupported") & df["library"].isin(sizes)]
+    done = df[df["status"].isin(COMPLETED)]
+    out = (df.groupby(["tool", "library"]).size().rename("attempted").to_frame()
+           .join(done.groupby(["tool", "library"])["total"].agg(stat).rename("time"))
+           .join(done.groupby(["tool", "library"]).size().rename("completed"))
+           .reset_index())
+    out["completed"] = out["completed"].fillna(0).astype(int)
+    out["size"] = out["library"].map(sizes)
+    return out.sort_values(["tool", "size", "library"])
+
+
+def make_size_chart(df, sizes, *, stat="median", title=None):
+    """Time vs. binary size, all binaries on one log-log axis: x = bytes on
+    disk, y = *stat* of total seconds across each binary's chains (see
+    size_summary for what is left out), one line per tool."""
+    summary = size_summary(df, sizes, stat)
+    if summary.empty:
+        raise ValueError("no binary sizes known for these results "
+                         "(no library_bytes in run-meta.yaml; try --binaries-dir).")
+    present = set(summary["tool"])
+    tools = ([t for t in TOOL_COLORS if t in present]
+             + sorted(present - set(TOOL_COLORS)))
+    lo_exp, hi_exp, inf_y = _time_range(summary["time"].dropna())
+
+    fig, ax = plt.subplots(figsize=(8.5, 4.8))
+    fig.patch.set_facecolor("white")
+    ax.axhline(inf_y, color=MUTED, lw=1, ls="--", zorder=1)
+    for tool in tools:
+        color = TOOL_COLORS.get(tool, OTHER_TOOL_COLOR)
+        rows = summary[summary["tool"] == tool]
+        xs = list(rows["size"])
+        ok = list(rows["time"].notna())
+        ys = [t if k else inf_y for t, k in zip(rows["time"], ok)]
+        ax.plot(xs, ys, color=color, lw=1.2, ls=":", alpha=0.7, zorder=2)
+        ax.plot(xs, [y if k else float("nan") for y, k in zip(ys, ok)],
+                color=color, lw=2, zorder=3)
+        for x, y, k in zip(xs, ys, ok):
+            if k:
+                ax.plot(x, y, marker="s", ms=8, color=color, mec="white",
+                        mew=1.2, ls="none", zorder=4)
+            else:
+                ax.plot(x, y, marker="s", ms=8, mfc="white", mec=color,
+                        mew=1.8, ls="none", zorder=4, clip_on=False)
+
+    ax.set_xscale("log")
+    ax.xaxis.set_major_formatter(FuncFormatter(_fmt_bytes))
+    ax.xaxis.set_minor_locator(NullLocator())
+    _style_time_axis(ax, lo_exp, hi_exp, inf_y)
+    ax.set_xlabel("binary size on disk", color=MUTED, fontsize=9)
+    ax.set_ylabel(f"{stat} total time across chains (s)", color=MUTED, fontsize=9)
+    if title:
+        ax.set_title(title, fontsize=13, fontweight="bold", color=INK, pad=12)
+
+    handles = [_tool_handle(t) for t in tools]
+    if summary["time"].isna().any():
+        handles.append(Line2D([], [], ls="none", marker="s", ms=7, mfc="white",
+                              mec=MUTED, mew=1.6,
+                              label="no search completed (error / timeout)"))
+    fig.legend(handles=handles, loc="lower center", ncol=len(handles),
+               frameon=False, fontsize=8.5, labelcolor=INK,
+               bbox_to_anchor=(0.5, -0.03), columnspacing=1.4, handletextpad=0.5)
+    fig.tight_layout(rect=(0, 0.05, 1, 1))
+    return fig
+
+
+SIZE_STATS = ("median", "mean")
+
+
+def size_chart_title(stat):
+    return f"{stat.capitalize()} time to an answer vs. binary size"
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(
         description="Render per-architecture tool-comparison line charts from "
@@ -228,6 +358,9 @@ def main(argv=None):
     ap.add_argument("--arch", action="append", metavar="ARCH",
                     help="only this architecture, as in the TSV's arch column "
                          "(repeatable; default: all)")
+    ap.add_argument("--binaries-dir", metavar="DIR",
+                    help="corpus folder to take binary sizes from when the "
+                         "run-meta.yaml beside the TSV has no library_bytes")
     ap.add_argument("--pdf", action="store_true",
                     help=f"save PDFs to {DEFAULT_RESULTS_DIR}/<name>_<arch>.pdf "
                          "instead of previewing")
@@ -291,11 +424,26 @@ def main(argv=None):
             if not saving:
                 return 1
 
-    for arch in archs:
-        fig = make_compare_chart(df[df["arch"] == arch], title=_pretty_arch(arch)[1])
+    df = df[df["arch"].isin(archs)]
+    figures = [(arch, make_compare_chart(df[df["arch"] == arch],
+                                         title=_pretty_arch(arch)[1]))
+               for arch in archs]
+    sizes = load_sizes(src, args.binaries_dir)
+    if set(df["library"]) - set(sizes):
+        print("  [WARN] binary sizes unknown for some libraries (no "
+              "library_bytes in run-meta.yaml; pass --binaries-dir): they are "
+              "left out of the size charts.", file=sys.stderr)
+    for stat in SIZE_STATS:
+        try:
+            figures.append((f"size_{stat}", make_size_chart(
+                df, sizes, stat=stat, title=size_chart_title(stat))))
+        except ValueError as exc:
+            print(f"  [WARN] no {stat}-vs-size chart: {exc}", file=sys.stderr)
+
+    for suffix, fig in figures:
         if saving:
             base, ext = os.path.splitext(out)
-            path = f"{base}_{arch}{ext}"
+            path = f"{base}_{suffix}{ext}"
             parent = os.path.dirname(path)
             if parent:
                 os.makedirs(parent, exist_ok=True)

@@ -328,7 +328,8 @@ def _ropchain_table_html(tsv):
 def _compare_charts_html(tsv, img_dir, exp_name):
     """<img> tags for the tool-comparison charts of a compare-tools TSV (one
     with a `tool` column), saved under *img_dir*: one per architecture, then
-    median and mean time vs. binary size when run-meta.yaml records the sizes.
+    median and mean time vs. binary size (over all binaries and per
+    architecture) when run-meta.yaml records the sizes.
     Returns "" for a single-tool ropchain TSV, or if plotting fails -- the
     table below the charts is the complete record either way."""
     with open(tsv, newline="", encoding="utf-8") as f:
@@ -349,10 +350,8 @@ def _compare_charts_html(tsv, img_dir, exp_name):
                         f'alt="{html.escape(title)}: time to find each ROP chain, '
                         f'per tool">')
         sizes = compare_plot.load_sizes(str(tsv))
-        for stat in compare_plot.SIZE_STATS if sizes else ():
-            title = compare_plot.size_chart_title(stat)
-            fig = compare_plot.make_size_chart(df, sizes, stat=stat, title=title)
-            name = f"{tsv.stem}_size_{stat}.png"
+        for suffix, title, fig in compare_plot.size_figures(df, sizes):
+            name = f"{tsv.stem}_{suffix}.png"
             fig.savefig(img_dir / name, dpi=150, transparent=False,
                         facecolor="white", bbox_inches="tight", pad_inches=0.1)
             plt.close(fig)

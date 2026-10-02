@@ -6,7 +6,9 @@ on:
     paths:
       - "results/**"
       - "experiments/*.yaml"
+      - "ropchains/rop3/**"
       - "utils/heatmap.py"
+      - "utils/compare_plot.py"
       - "utils/build_site.py"
       - "utils/machine_specs.py"
       - "machine.yaml"

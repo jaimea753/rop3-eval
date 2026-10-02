@@ -31,6 +31,7 @@ import yaml
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from heatmap import load_matrix, make_heatmap  # noqa: E402
+import compare_plot  # noqa: E402
 import machine_specs  # noqa: E402
 
 PAGE_TEMPLATE = """<!doctype html>
@@ -324,6 +325,33 @@ def _ropchain_table_html(tsv):
     )
 
 
+def _compare_charts_html(tsv, img_dir, exp_name):
+    """<img> tags for the per-architecture tool-comparison charts of a
+    compare-tools TSV (one with a `tool` column), saved under *img_dir*.
+    Returns "" for a single-tool ropchain TSV, or if plotting fails -- the
+    table below the charts is the complete record either way."""
+    with open(tsv, newline="", encoding="utf-8") as f:
+        header = f.readline().rstrip("\r\n").split("\t")
+    if not compare_plot.COMPARE_COLS.issubset(header):
+        return ""
+    imgs = []
+    try:
+        df = compare_plot.load_compare(str(tsv))
+        for arch in compare_plot.arch_order(df):
+            title = compare_plot._pretty_arch(arch)[1]
+            fig = compare_plot.make_compare_chart(df[df["arch"] == arch], title=title)
+            name = f"{tsv.stem}_{arch}.png"
+            fig.savefig(img_dir / name, dpi=150, transparent=False,
+                        facecolor="white", bbox_inches="tight", pad_inches=0.1)
+            plt.close(fig)
+            imgs.append(f'<img src="img/{exp_name}/{html.escape(name)}" '
+                        f'alt="{html.escape(title)}: time to find each ROP chain, '
+                        f'per tool">')
+    except Exception as exc:
+        print(f"  [WARN] could not chart {tsv}: {exc}", file=sys.stderr)
+    return "\n".join(imgs)
+
+
 def render_experiment(exp_dir, out_dir, exp_name):
     img_dir = out_dir / "img" / exp_name
     data_dir = out_dir / "data" / exp_name
@@ -341,8 +369,10 @@ def render_experiment(exp_dir, out_dir, exp_name):
         # first; only genuine count matrices fall through to make_heatmap().
         table_html = _ropchain_table_html(str(tsv))
         if table_html is not None:
+            charts = _compare_charts_html(tsv, img_dir, exp_name)
             cards.append(CARD_TEMPLATE.format(
-                stem=html.escape(stem), body=table_html, tsv_href=tsv_href))
+                stem=html.escape(stem), body=charts + table_html,
+                tsv_href=tsv_href))
             continue
 
         try:

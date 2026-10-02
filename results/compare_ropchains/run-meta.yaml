@@ -16,6 +16,18 @@ tool_versions:
   pwntools: pwntools 4.15.0
 elapsed_seconds: 9003.6
 libraries: 11
+library_bytes:
+  libc_debian_aarch64.so: 1651344
+  libc_debian_amd64.so: 1926256
+  libc_debian_riscv.so: 1209368
+  libc_debian_x86.so: 2225144
+  libmergedlo_debian_aarch64.so: 71244072
+  libmergedlo_debian_amd64.so: 73422744
+  libmergedlo_debian_riscv.so: 70355240
+  zlib1g_aarch64_libz.so.1: 133520
+  zlib1g_amd64_libz.so.1: 121280
+  zlib1g_riscv_libz.so.1: 84280
+  zlib1g_x86_libz.so.1: 112220
 reused_from_cache: 7
 sequential: true
 machine:

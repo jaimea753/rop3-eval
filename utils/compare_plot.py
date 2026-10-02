@@ -56,6 +56,10 @@ TOOL_COLORS = {
     "pwntools": "#e87ba4",
 }
 OTHER_TOOL_COLOR = "#898781"
+# Tools whose gadget loading dwarfs the search itself: the size charts draw a
+# second, dashed series for them from `seconds` alone (extract_seconds left out).
+NO_LOAD_TOOLS = ("angrop",)
+NO_LOAD_SUFFIX = " (without load)"
 
 INK, MUTED, GRID = "#0b0b0b", "#52514e", "#e1e0d9"
 # Searches that ran to completion; everything else is purged from the size
@@ -88,7 +92,8 @@ def _goal(chain):
 
 def load_compare(tsv, ropchains_dir=DEFAULT_ROPCHAINS_DIR):
     """Read a compare-tools TSV and add the plotting columns: `ok` (a chain was
-    found), `total` (extract + search seconds, floored) and `n_instr` (ROPLang
+    found), `total` (extract + search seconds, floored), `search` (search seconds alone,
+    floored) and `n_instr` (ROPLang
     instruction count; NaN when the reference chain file is missing)."""
     df = pd.read_csv(tsv, sep="\t", dtype=str, keep_default_na=False)
     missing = COMPARE_COLS - set(df.columns)
@@ -102,6 +107,7 @@ def load_compare(tsv, ropchains_dir=DEFAULT_ROPCHAINS_DIR):
     seconds = pd.to_numeric(df["seconds"], errors="coerce")
     extract = pd.to_numeric(df.get("extract_seconds"), errors="coerce")
     df["total"] = (seconds + extract.fillna(0)).clip(lower=TIME_FLOOR)
+    df["search"] = seconds.clip(lower=TIME_FLOOR)
 
     counts = {}
     for chain in df["chain"].unique():
@@ -143,9 +149,18 @@ def _style_time_axis(ax, lo_exp, hi_exp, inf_y):
     ax.spines["bottom"].set_color("#c3c2b7")
 
 
+def _tool_style(tool):
+    """(colour, line style, marker) of a series; a "without load" variant
+    keeps its tool's colour, dashed and with diamonds."""
+    base = tool.removesuffix(NO_LOAD_SUFFIX)
+    color = TOOL_COLORS.get(base, OTHER_TOOL_COLOR)
+    return (color, "--", "D") if base != tool else (color, "-", "s")
+
+
 def _tool_handle(tool):
-    return Line2D([], [], color=TOOL_COLORS.get(tool, OTHER_TOOL_COLOR), lw=2,
-                  marker="s", ms=7, mec="white", mew=1, label=tool)
+    color, ls, marker = _tool_style(tool)
+    return Line2D([], [], color=color, lw=2, ls=ls, marker=marker,
+                  ms=6 if marker == "D" else 7, mec="white", mew=1, label=tool)
 
 
 def make_compare_chart(df_arch, *, title=None):
@@ -272,7 +287,13 @@ def size_summary(df, sizes, stat="median"):
     averaged in (their time cells are a cap or a partial measurement, not a
     result), as are `unsupported` pairs. A tool that was run against a binary
     but completed no search there gets `time` NaN (drawn on the ∞ line); a
-    tool with no recipe for any of the binary's chains gets no row at all."""
+    tool with no recipe for any of the binary's chains gets no row at all.
+
+    Each tool in NO_LOAD_TOOLS additionally gets a "<tool> (without load)"
+    series, the same statistic over the search seconds alone."""
+    no_load = df[df["tool"].isin(NO_LOAD_TOOLS)]
+    df = pd.concat([df, no_load.assign(tool=no_load["tool"] + NO_LOAD_SUFFIX,
+                                       total=no_load["search"])])
     df = df[(df["status"] != "unsupported") & df["library"].isin(sizes)]
     done = df[df["status"].isin(COMPLETED)]
     out = (df.groupby(["tool", "library"]).size().rename("attempted").to_frame()
@@ -293,26 +314,27 @@ def make_size_chart(df, sizes, *, stat="median", title=None):
         raise ValueError("no binary sizes known for these results "
                          "(no library_bytes in run-meta.yaml; try --binaries-dir).")
     present = set(summary["tool"])
-    tools = ([t for t in TOOL_COLORS if t in present]
-             + sorted(present - set(TOOL_COLORS)))
+    known = [v for t in TOOL_COLORS for v in (t, t + NO_LOAD_SUFFIX)]
+    tools = [t for t in known if t in present] + sorted(present - set(known))
     lo_exp, hi_exp, inf_y = _time_range(summary["time"].dropna())
 
     fig, ax = plt.subplots(figsize=(8.5, 4.8))
     fig.patch.set_facecolor("white")
     ax.axhline(inf_y, color=MUTED, lw=1, ls="--", zorder=1)
     for tool in tools:
-        color = TOOL_COLORS.get(tool, OTHER_TOOL_COLOR)
+        color, ls, marker = _tool_style(tool)
+        ms = 6.5 if marker == "D" else 8
         rows = summary[summary["tool"] == tool]
         xs = list(rows["size"])
         ok = list(rows["time"].notna())
         ys = [t if k else inf_y for t, k in zip(rows["time"], ok)]
         ax.plot(xs, ys, color=color, lw=1.2, ls=":", alpha=0.7, zorder=2)
         ax.plot(xs, [y if k else float("nan") for y, k in zip(ys, ok)],
-                color=color, lw=2, zorder=3)
+                color=color, lw=2, ls=ls, zorder=3)
         for x, y, k in zip(xs, ys, ok):
             if k:
-                ax.plot(x, y, marker="s", ms=8, color=color, mec="white",
-                        mew=1.2, ls="none", zorder=4)
+                ax.plot(x, y, marker=marker, ms=ms, color=color, mec="white",
+                        mew=1.2, ls="none", zorder=4, clip_on=False)
             else:
                 ax.plot(x, y, marker="s", ms=8, mfc="white", mec=color,
                         mew=1.8, ls="none", zorder=4, clip_on=False)
@@ -341,8 +363,25 @@ def make_size_chart(df, sizes, *, stat="median", title=None):
 SIZE_STATS = ("median", "mean")
 
 
-def size_chart_title(stat):
-    return f"{stat.capitalize()} time to an answer vs. binary size"
+def size_chart_title(stat, arch=None):
+    title = f"{stat.capitalize()} time to an answer vs. binary size"
+    return f"{title} — {_pretty_arch(arch)[1]}" if arch else title
+
+
+def size_figures(df, sizes):
+    """Yield (suffix, title, figure) for every size chart of *df*: per
+    statistic, one over all binaries, then one per architecture when there is
+    more than one. A chart with no sized binary to show is skipped."""
+    archs = arch_order(df)
+    for stat in SIZE_STATS:
+        for arch in [None] + (archs if len(archs) > 1 else []):
+            part = df if arch is None else df[df["arch"] == arch]
+            title = size_chart_title(stat, arch)
+            try:
+                fig = make_size_chart(part, sizes, stat=stat, title=title)
+            except ValueError:
+                continue
+            yield f"size_{stat}" + (f"_{arch}" if arch else ""), title, fig
 
 
 def main(argv=None):
@@ -433,12 +472,7 @@ def main(argv=None):
         print("  [WARN] binary sizes unknown for some libraries (no "
               "library_bytes in run-meta.yaml; pass --binaries-dir): they are "
               "left out of the size charts.", file=sys.stderr)
-    for stat in SIZE_STATS:
-        try:
-            figures.append((f"size_{stat}", make_size_chart(
-                df, sizes, stat=stat, title=size_chart_title(stat))))
-        except ValueError as exc:
-            print(f"  [WARN] no {stat}-vs-size chart: {exc}", file=sys.stderr)
+    figures += [(suffix, fig) for suffix, _title, fig in size_figures(df, sizes)]
 
     for suffix, fig in figures:
         if saving:

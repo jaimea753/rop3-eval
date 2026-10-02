@@ -13,6 +13,12 @@ gadgets, builds the chain, and prints exactly ONE JSON line to stdout::
     {"found": bool, "extract_seconds": float|null, "seconds": float|null,
      "status": "found|not-found|timeout|load-timeout|error", "chain": str}
 
+On an error the line also carries an optional ``"error"`` field, a
+"{ExcType}: {msg} ({phase})" diagnostic the driver surfaces and logs; it is
+absent on success so the common-case schema is unchanged. (A hard crash that
+kills the process emits no line at all — the diagnostic then survives only on
+stderr.)
+
 Gadget loading and chain construction are timed and bounded separately, matching
 compare-tools.py's rop3 runner. ``extract_seconds`` measures find_gadgets() (the
 gadget-loading phase, bounded by ``--load-timeout``); ``seconds`` measures build()
@@ -72,15 +78,22 @@ def _load_spec(path):
     return build
 
 
-def _emit(found, extract_seconds, seconds, status, chain=""):
-    """Print the single result line to stdout and flush."""
-    print(json.dumps({
+def _emit(found, extract_seconds, seconds, status, chain="", error=None):
+    """Print the single result line to stdout and flush.
+
+    ``error`` is an optional "{ExcType}: {msg} ({phase})" diagnostic, included
+    only when set so the happy-path schema is unchanged; the driver surfaces and
+    logs it when a cell comes back ``status=error`` (see compare-tools.py)."""
+    out = {
         "found": bool(found),
         "extract_seconds": round(extract_seconds, 4) if extract_seconds is not None else None,
         "seconds": round(seconds, 4) if seconds is not None else None,
         "status": status,
         "chain": chain or "",
-    }))
+    }
+    if error:
+        out["error"] = error
+    print(json.dumps(out))
     sys.stdout.flush()
 
 
@@ -99,14 +112,16 @@ def main(argv=None):
         import angrop  # noqa: F401  (registers the ROP analysis)
         from angrop.errors import RopException
     except Exception as exc:  # ImportError, and angr's own load-time errors
+        msg = f"{type(exc).__name__}: {exc} (import)"
         print(f"[angrop_worker] cannot import angr/angrop: {exc}", file=sys.stderr)
-        return _emit(False, None, None, "error")
+        return _emit(False, None, None, "error", error=msg)
 
     try:
         build = _load_spec(args.spec)
     except Exception as exc:
+        msg = f"{type(exc).__name__}: {exc} (spec)"
         print(f"[angrop_worker] bad spec {args.spec}: {exc}", file=sys.stderr)
-        return _emit(False, None, None, "error")
+        return _emit(False, None, None, "error", error=msg)
 
     # --- Load phase: angr.Project + find_gadgets(), bounded by --load-timeout --
     if args.load_timeout:
@@ -121,11 +136,13 @@ def main(argv=None):
     except MemoryError:
         print("[angrop_worker] out of memory (load)", file=sys.stderr)
         _LOAD_DONE.set()
-        return _emit(False, time.perf_counter() - t0, None, "error")
+        return _emit(False, time.perf_counter() - t0, None, "error",
+                     error="MemoryError: out of memory (load)")
     except Exception as exc:
-        print(f"[angrop_worker] {type(exc).__name__}: {exc} (load)", file=sys.stderr)
+        msg = f"{type(exc).__name__}: {exc} (load)"
+        print(f"[angrop_worker] {msg}", file=sys.stderr)
         _LOAD_DONE.set()
-        return _emit(False, time.perf_counter() - t0, None, "error")
+        return _emit(False, time.perf_counter() - t0, None, "error", error=msg)
     _EXTRACT["seconds"] = extract
     _LOAD_DONE.set()   # stand the load watchdog down before starting the build
 
@@ -134,6 +151,7 @@ def main(argv=None):
         threading.Thread(target=_build_watchdog, args=(args.build_timeout,),
                          daemon=True).start()
     t1 = time.perf_counter()
+    err = None
     try:
         chain = build(proj, rop)
         seconds = time.perf_counter() - t1
@@ -147,13 +165,15 @@ def main(argv=None):
     except MemoryError:
         print("[angrop_worker] out of memory (build)", file=sys.stderr)
         found, status, seconds, text = False, "error", time.perf_counter() - t1, ""
+        err = "MemoryError: out of memory (build)"
     except Exception as exc:
-        print(f"[angrop_worker] {type(exc).__name__}: {exc} (build)", file=sys.stderr)
+        err = f"{type(exc).__name__}: {exc} (build)"
+        print(f"[angrop_worker] {err}", file=sys.stderr)
         found, status, seconds, text = False, "error", time.perf_counter() - t1, ""
     # Stand the watchdog down before emitting so it can't race a spurious timeout
     # line on top of this verdict.
     _BUILD_DONE.set()
-    return _emit(found, extract, seconds, status, text)
+    return _emit(found, extract, seconds, status, text, error=err)
 
 
 if __name__ == "__main__":

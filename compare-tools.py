@@ -318,6 +318,44 @@ def _ropper_chain_text(stdout):
     return stdout.strip()
 
 
+# Durable sink for subprocess-worker (angrop/ropium/pwntools) failures, set by
+# main() to results/<experiment>/worker-errors.log once the out-dir is known. The
+# workers write their traceback to stderr, which the result TSV cannot hold; on an
+# `error`/no-result cell we both surface the one-line diagnostic and append the
+# worker's full stderr here, so a failure leaves a trace instead of vanishing.
+_WORKER_ERROR_LOG = None
+
+
+def _spec_label(path):
+    """Chain name from a recipe/query path, e.g. '.../mprotect_x86.py' -> 'mprotect_x86'."""
+    return os.path.splitext(os.path.basename(path))[0]
+
+
+def _worker_diag(res, stderr):
+    """One-line worker diagnostic: the JSON 'error' field if present, else the last
+    non-empty stderr line, else ''."""
+    if res and res.get("error"):
+        return res["error"]
+    s = (stderr or "").strip()
+    return s.splitlines()[-1] if s else ""
+
+
+def _log_worker_error(label, status, stderr, diag):
+    """Surface a worker failure on the console and append its full stderr to the
+    worker-errors log (when one is configured). `label` is "tool | binary | chain"."""
+    print(f"  [WARN] {label}: {diag or '(no diagnostic)'} [{status}]", file=sys.stderr)
+    if not _WORKER_ERROR_LOG:
+        return
+    try:
+        with open(_WORKER_ERROR_LOG, "a") as fh:
+            stamp = datetime.datetime.now().isoformat(timespec="seconds")
+            fh.write(f"=== {label} | status={status} | {stamp}\n")
+            fh.write((stderr or "").rstrip() + "\n\n")
+    except OSError as exc:
+        print(f"  [WARN] could not write worker-errors log "
+              f"{_WORKER_ERROR_LOG!r}: {exc}", file=sys.stderr)
+
+
 def _last_json_line(text):
     for line in reversed((text or "").splitlines()):
         line = line.strip()
@@ -345,23 +383,25 @@ def run_angrop(venv_python, lib_item, spec_file, load_timeout, chain_timeout):
         return False, None, round(time.perf_counter() - t0, 4), "timeout", ""
     except FileNotFoundError:
         return False, None, None, "error", ""     # venv python missing
+    label = f"angrop | {lib_item['name']} | {_spec_label(spec_file)}"
     res = _last_json_line(p.stdout)
     if res is None:
-        if p.stderr:
-            print(f"  [WARN] angrop worker gave no result: "
-                  f"{p.stderr.strip().splitlines()[-1] if p.stderr.strip() else '?'}",
-                  file=sys.stderr)
+        _log_worker_error(label, "error", p.stderr, _worker_diag(None, p.stderr))
         return False, None, None, "error", ""
+    status = res.get("status", "error")
+    if status == "error":
+        _log_worker_error(label, status, p.stderr, _worker_diag(res, p.stderr))
     return (bool(res.get("found")), res.get("extract_seconds"),
-            res.get("seconds"), res.get("status", "error"),
-            res.get("chain", "") or "")
+            res.get("seconds"), status, res.get("chain", "") or "")
 
 
-def _run_worker(venv_python, worker, extra_args, load_timeout, chain_timeout):
+def _run_worker(venv_python, worker, extra_args, load_timeout, chain_timeout,
+                label=""):
     """Shared launcher for the subprocess-worker tools (angrop/ropium/pwntools):
     run `worker` under `venv_python` with the split load/build budgets, guard it
     with an outer timeout well above the worker's own watchdogs, and parse the
-    single JSON result line. Returns the standard 5-tuple."""
+    single JSON result line. Returns the standard 5-tuple. `label` ("tool | binary
+    | chain") names the cell in the worker-errors log on failure."""
     cmd = [venv_python, os.path.join(HERE, "utils", worker),
            "--load-timeout", str(int(load_timeout or 0)),
            "--build-timeout", str(int(chain_timeout or 0))] + extra_args
@@ -374,16 +414,16 @@ def _run_worker(venv_python, worker, extra_args, load_timeout, chain_timeout):
         return False, None, round(time.perf_counter() - t0, 4), "timeout", ""
     except FileNotFoundError:
         return False, None, None, "error", ""     # venv python missing
+    label = label or worker
     res = _last_json_line(p.stdout)
     if res is None:
-        if p.stderr:
-            print(f"  [WARN] {worker} gave no result: "
-                  f"{p.stderr.strip().splitlines()[-1] if p.stderr.strip() else '?'}",
-                  file=sys.stderr)
+        _log_worker_error(label, "error", p.stderr, _worker_diag(None, p.stderr))
         return False, None, None, "error", ""
+    status = res.get("status", "error")
+    if status == "error":
+        _log_worker_error(label, status, p.stderr, _worker_diag(res, p.stderr))
     return (bool(res.get("found")), res.get("extract_seconds"),
-            res.get("seconds"), res.get("status", "error"),
-            res.get("chain", "") or "")
+            res.get("seconds"), status, res.get("chain", "") or "")
 
 
 def run_ropium(venv_python, lib_item, query_file, arch, load_timeout, chain_timeout):
@@ -394,7 +434,8 @@ def run_ropium(venv_python, lib_item, query_file, arch, load_timeout, chain_time
         return False, None, None, "unsupported", ""
     return _run_worker(venv_python, "ropium_worker.py",
                        ["--binary", lib_item["files"][0], "--query", query_file,
-                        "--arch", arch], load_timeout, chain_timeout)
+                        "--arch", arch], load_timeout, chain_timeout,
+                       label=f"ropium | {lib_item['name']} | {_spec_label(query_file)}")
 
 
 def run_pwntools(venv_python, lib_item, spec_file, load_timeout, chain_timeout):
@@ -402,7 +443,8 @@ def run_pwntools(venv_python, lib_item, spec_file, load_timeout, chain_timeout):
     worker."""
     return _run_worker(venv_python, "pwntools_worker.py",
                        ["--binary", lib_item["files"][0], "--spec", spec_file],
-                       load_timeout, chain_timeout)
+                       load_timeout, chain_timeout,
+                       label=f"pwntools | {lib_item['name']} | {_spec_label(spec_file)}")
 
 
 # --- Tool versions (provenance + cache key) ---------------------------------
@@ -745,6 +787,9 @@ def main(argv=None):
         os.path.splitext(os.path.basename(args.config))[0])
     os.makedirs(out_dir, exist_ok=True)
     out_file = os.path.join(out_dir, "results_compare.tsv")
+    # Subprocess-worker tracebacks go here when a cell errors (see _log_worker_error).
+    global _WORKER_ERROR_LOG
+    _WORKER_ERROR_LOG = os.path.join(out_dir, "worker-errors.log")
     collector = RowCollector(out_file)
     collector.save()   # header/checkpoint exists immediately
 

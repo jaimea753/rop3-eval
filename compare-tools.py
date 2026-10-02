@@ -595,7 +595,7 @@ def process_library(lib_item, chains, tools, cfg):
 
 
 # --- Provenance -------------------------------------------------------------
-def write_run_meta(out_dir, cfg, versions, elapsed, n_libs, cache):
+def write_run_meta(out_dir, cfg, versions, elapsed, libs, cache):
     meta = {
         "generated": datetime.datetime.now().astimezone().isoformat(timespec="seconds"),
         "results": "results_compare.tsv",
@@ -607,7 +607,11 @@ def write_run_meta(out_dir, cfg, versions, elapsed, n_libs, cache):
         "tools": cfg["tools"],
         "tool_versions": versions,
         "elapsed_seconds": round(elapsed, 2),
-        "libraries": n_libs,
+        "libraries": len(libs),
+        # On-disk size of every binary: the corpus is gitignored, so this is
+        # the only place utils/compare_plot.py's size charts can read it from.
+        "library_bytes": {lib["name"]: sum(os.path.getsize(f) for f in lib["files"])
+                          for lib in libs},
         "reused_from_cache": cache.hits if cache is not None else 0,
         "sequential": True,
         "machine": machine_specs.load() if machine_specs else None,
@@ -826,7 +830,7 @@ def main(argv=None):
     print(f"\n{found}/{matched} (tool, binary, chain) cells realizable.")
     print(f"Saved to {out_file!r}")
     print(f"Completed in {time.time() - t0:.2f} seconds")
-    write_run_meta(out_dir, cfg, versions, time.time() - t0, len(libs), cache)
+    write_run_meta(out_dir, cfg, versions, time.time() - t0, libs, cache)
 
 
 if __name__ == "__main__":

@@ -7,4 +7,4 @@ stages the path string and emits the i386 execve syscall.
 
 
 def build(project, rop):
-    return rop.execve(path="/bin/sh")
+    return rop.execve(path=b"/bin/sh")

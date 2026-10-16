@@ -75,10 +75,10 @@ packages:
     binaries:
       - libz.so.1
 
-  # - name: firefox-esr
-  #   binaries:
-  #     - path: "usr/lib/firefox-esr/libxul.so"
-  #       name: "libxul_debian_{arch}.so"
+  - name: firefox-esr
+    binaries:
+      - path: "usr/lib/firefox-esr/libxul.so"
+        name: "libxul_debian_{arch}.so"
 
   - name: libreoffice-core
     binaries:

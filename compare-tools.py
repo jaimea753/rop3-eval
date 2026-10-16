@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""compare-tools.py — benchmark ROP-chain construction across five tools.
+"""compare-tools.py — benchmark ROP-chain construction across six tools.
 
 Companion to run-experiments.py. Where run-experiments.py measures rop3 alone,
 this driver runs the SAME semantic goals (execve / mprotect / turing) through
-rop3, ropper, angrop, ropium and pwntools and records, per (tool, binary,
+rop3, ropper, angrop, ropium, pwntools and rop4 and records, per (tool, binary,
 chain), whether each tool can build the chain and how long it takes.
 
 The tools do not share a chain language, so each is driven through its own
@@ -14,13 +14,18 @@ native interface, described by the per-tool files under ropchains/:
     ropchains/angrop/<goal>_<arch>.py    a build(project, rop) angrop snippet
     ropchains/ropium/<goal>_<arch>.query a single ropium query string
     ropchains/pwntools/<goal>_<arch>.py  a build(elf, rop) pwntools snippet
+    ropchains/rop4/<goal>_<arch>.txt     rop3 ROPLang DSL (rop4 is a Go port of
+                                         rop3 and reads the same chain files)
 
 The rop3 set is the reference universe of (goal, arch) pairs. A pair a tool has
 no file for is reported status=unsupported (ropper/ropium: x86/x86_64 chains
 only; angrop: no riscv, no turing; pwntools: x86/x86_64/aarch64) so the
-comparison matrix stays complete instead of silently sparse. angrop, ropium and
-pwntools each run in a throwaway subprocess worker (utils/*_worker.py) so an
-OOM/crash in one search cannot abort the run.
+comparison matrix stays complete instead of silently sparse. angrop, ropium,
+pwntools and rop4 each run in a throwaway subprocess worker (utils/*_worker.py)
+so an OOM/crash in one search cannot abort the run. rop4 (a Go/CGo port of rop3)
+has no pip package: a pinned prebuilt release is downloaded into a gitignored
+.rop4/ by utils/fetch_rop4.sh (the release library bundles capstone, so unlike
+ropium it needs no local build).
 
 Output: results/<config-stem>/results_compare.tsv, long format
     tool  library  arch  chain  found  seconds  extract_seconds  status
@@ -89,7 +94,7 @@ _binary_arch_key = runexp._binary_arch_key  # ELF/PE header -> x86/x86_64/aarch6
 _CHAIN_ARCH_TOKENS = runexp._CHAIN_ARCH_TOKENS
 
 TOOL_EXT = {"rop3": ".txt", "ropper": ".spec", "angrop": ".py",
-            "ropium": ".query", "pwntools": ".py"}
+            "ropium": ".query", "pwntools": ".py", "rop4": ".txt"}
 
 
 class _Timeout(Exception):
@@ -447,6 +452,26 @@ def run_pwntools(venv_python, lib_item, spec_file, load_timeout, chain_timeout):
                        label=f"pwntools | {lib_item['name']} | {_spec_label(spec_file)}")
 
 
+def run_rop4(venv_python, lib_item, chain, depth_map, rop3_flags,
+             load_timeout, chain_timeout):
+    """Run rop4 (a Go port of rop3) against the binary in a subprocess worker.
+
+    rop4 reuses rop3's ROPLang, so the chain file is the rop3 reference chain;
+    the per-arch depth and the shared constructor flags are passed through so the
+    search is configured identically to the in-process rop3 run. The worker lives
+    in its own process because rop4's native Go/CGo code can crash or OOM; it
+    splits the load and search budgets exactly as run_rop3 does. All of the
+    binary's files are passed (rop4, like rop3, analyses a bundle together)."""
+    depth = _resolve_depth(depth_map, chain["arch"])
+    extra = ["--ropchain", chain["rop3_file"],
+             "--depth", "" if depth is None else str(depth),
+             "--flags", json.dumps(rop3_flags or {}),
+             "--binary", *lib_item["files"]]
+    return _run_worker(venv_python, "rop4_worker.py", extra,
+                       load_timeout, chain_timeout,
+                       label=f"rop4 | {lib_item['name']} | {chain['chain']}")
+
+
 # --- Tool versions (provenance + cache key) ---------------------------------
 def tool_versions(cfg, rop3_folder):
     """Version/identity of each enabled tool, for provenance and the cache key."""
@@ -467,6 +492,8 @@ def tool_versions(cfg, rop3_folder):
         versions["pwntools"] = _probe(
             f"{cfg['venv_python']} -c "
             "\"import pwnlib;print('pwntools',pwnlib.__version__)\"")
+    if "rop4" in tools:
+        versions["rop4"] = _rop4_commit()
     return versions
 
 
@@ -490,6 +517,46 @@ def _ropium_commit():
                            capture_output=True, text=True, timeout=30)
         rev = p.stdout.strip()
         return f"ropium@{rev}" if p.returncode == 0 and rev else None
+    except Exception:
+        return None
+
+
+def _rop4_version(home):
+    """rop4's own reported library version (via the wrapper), or None if the
+    prebuilt library isn't importable yet. Part of the provenance/cache key so a
+    release bump re-measures."""
+    code = ("import sys;sys.path.insert(0, sys.argv[1]);"
+            "import rop4;print(rop4.version())")
+    try:
+        p = subprocess.run([sys.executable, "-c", code, os.path.join(home, "python")],
+                           capture_output=True, text=True, timeout=60,
+                           env={**os.environ, "ROP4_HOME": home})
+        v = (p.stdout or "").strip().splitlines()
+        return v[0] if p.returncode == 0 and v else None
+    except Exception:
+        return None
+
+
+def _rop4_commit():
+    """Identity of the vendored rop4 for provenance and the cache key — rop4 has
+    no pip version. Prefers the pinned release tag written by utils/fetch_rop4.sh
+    (.rop4/RELEASE), appends the library's own reported version, and falls back to
+    a git rev if .rop4/ happens to be a source checkout. None if absent."""
+    home = os.environ.get("ROP4_HOME") or os.path.join(HERE, ".rop4")
+    tag = None
+    try:
+        with open(os.path.join(home, "RELEASE")) as f:
+            tag = f.read().strip() or None
+    except OSError:
+        tag = None
+    lib_ver = _rop4_version(home)
+    if tag or lib_ver:
+        return "rop4@" + "+".join(p for p in (tag, lib_ver) if p)
+    try:
+        p = subprocess.run(["git", "-C", home, "rev-parse", "--short", "HEAD"],
+                           capture_output=True, text=True, timeout=30)
+        rev = p.stdout.strip()
+        return f"rop4@{rev}" if p.returncode == 0 and rev else None
     except Exception:
         return None
 
@@ -562,6 +629,12 @@ def process_library(lib_item, chains, tools, cfg):
             if tool == "rop3":
                 found, extract_secs, secs, status, chain_text = run_rop3(
                     lib_item, chain, depth_map, rop3_flags,
+                    load_timeout, chain_timeout)
+            elif tool == "rop4":
+                # rop4 reuses rop3's chain files, so it is dispatched from the
+                # reference chain directly rather than via tool_file().
+                found, extract_secs, secs, status, chain_text = run_rop4(
+                    cfg["venv_python"], lib_item, chain, depth_map, rop3_flags,
                     load_timeout, chain_timeout)
             else:
                 f = tool_file(cfg["ropchains"], tool, chain["chain"])
@@ -642,6 +715,7 @@ def make_cache(cfg, versions, chains, enabled, refresh):
     engine = (f"rop3={versions.get('rop3')};ropper={versions.get('ropper')};"
               f"angrop={versions.get('angr_angrop')};"
               f"ropium={versions.get('ropium')};pwntools={versions.get('pwntools')};"
+              f"rop4={versions.get('rop4')};"
               f"tools={'+'.join(cfg['tools'])}")
     # Fingerprint every per-tool chain file, not just rop3's, so editing a spec
     # invalidates the affected library results.
@@ -707,13 +781,13 @@ def _abspath(cfg, key):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description="Compare rop3, ropper, angrop, "
-                                             "ropium and pwntools on ROP-chain "
-                                             "construction.")
+                                             "ropium, pwntools and rop4 on "
+                                             "ROP-chain construction.")
     ap.add_argument("--config", required=True, metavar="FILE",
                     help="YAML config (see experiments/compare_ropchains.yaml).")
     ap.add_argument("--tools", metavar="LIST",
                     help="comma-separated subset override "
-                         "(rop3,ropper,angrop,ropium,pwntools).")
+                         "(rop3,ropper,angrop,ropium,pwntools,rop4).")
     ap.add_argument("--load-timeout", type=float, default=None, metavar="SEC",
                     help="gadget-loading timeout (rop3/angrop; 0 = unlimited). "
                          "Config key: 'load_timeout'.")

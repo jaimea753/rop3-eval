@@ -14,6 +14,12 @@ downloads:
     url: https://snapshot.debian.org/archive/debian/20251201T030959Z/pool/main/g/glibc/libc6_2.41-12_i386.deb
     extract: [data.tar, usr/lib/i386-linux-gnu/libc.so.6]
     sha256: 1b1389ca98e6f513d6e3c58f0b98a0702104f9ea27a6f46eb071ca286bb541cd
+  - out: debian_aarch64_libc.so
+    url: https://snapshot.debian.org/archive/debian/20251201T030959Z/pool/main/g/glibc/libc6_2.41-12_arm64.deb
+    extract: [data.tar, usr/lib/aarch64-linux-gnu/libc.so.6]
+  - out: debian_riscv64_libc.so
+    url: https://snapshot.debian.org/archive/debian/20251201T030959Z/pool/main/g/glibc/libc6_2.41-12_riscv64.deb
+    extract: [data.tar, usr/lib/riscv64-linux-gnu/libc.so.6]
 
   - out: ubuntu_amd64_libc.so
     url: https://launchpad.net/ubuntu/+archive/primary/+files/libc6_2.39-0ubuntu8.6_amd64.deb
@@ -23,6 +29,12 @@ downloads:
     url: https://launchpad.net/ubuntu/+archive/primary/+files/libc6_2.39-0ubuntu8.6_i386.deb
     extract: [data.tar, usr/lib/i386-linux-gnu/libc.so.6]
     sha256: 405fbcfb7fd8516e057f1015c10cf67ccf667caf67970afaa70fb098ec87562c
+  - out: ubuntu_aarch64_libc.so
+    url: https://launchpad.net/ubuntu/+archive/primary/+files/libc6_2.39-0ubuntu8.6_arm64.deb
+    extract: [data.tar, usr/lib/aarch64-linux-gnu/libc.so.6]
+  - out: ubuntu_riscv64_libc.so
+    url: https://launchpad.net/ubuntu/+archive/primary/+files/libc6_2.39-0ubuntu8.6_riscv64.deb
+    extract: [data.tar, usr/lib/riscv64-linux-gnu/libc.so.6]
 
   - out: archlinux_amd64_libc.so
     url: https://archive.archlinux.org/packages/g/glibc/glibc-2.42%2Br33%2Bgde1fe81f4714-1-x86_64.pkg.tar.zst
@@ -37,6 +49,9 @@ downloads:
     url: https://kojipkgs.fedoraproject.org/packages/glibc/2.42/4.fc43/i686/glibc-2.42-4.fc43.i686.rpm
     extract: [usr/lib/libc.so.6]
     sha256: 8ea4685184bdd16f5ab70ef2012df83689b5e0f72a9ef64c4e1e2a3e312be69d
+  - out: fedora43_aarch64_libc.so
+    url: https://kojipkgs.fedoraproject.org//packages/glibc/2.42/4.fc43/aarch64/glibc-2.42-4.fc43.aarch64.rpm
+    extract: [usr/lib64/libc.so.6]
 
   - out: void_glibc_amd64_libc.so
     url: https://repo-fi.voidlinux.org/current/glibc-2.41_1.x86_64.xbps
@@ -54,6 +69,12 @@ downloads:
     url: https://repo-fi.voidlinux.org/current/musl-bootstrap-1.2.6_1.i686.xbps
     extract: [usr/lib/musl/lib/libc.so]
     sha256: 7b82d5daacd52fcb7f0973613c534dfab3125a0b6386391cb79858cbedaf0c71
+  - out: void_glibc_aarch64_libc.so
+    url: https://repo-fi.voidlinux.org/current/aarch64/glibc-2.41_1.aarch64.xbps
+    extract: [usr/lib/libc.so.6]
+  - out: void_musl_aarch64_libc.so
+    url: https://repo-fi.voidlinux.org/current/aarch64/musl-bootstrap-1.2.6_1.aarch64.xbps
+    extract: [usr/lib/musl/lib/libc.so]
 
   - out: slackware_amd64_libc.so
     url: https://mirrors.slackware.com/slackware/slackware64-15.0/patches/packages/glibc-2.33-x86_64-9_slack15.0.txz
@@ -72,6 +93,12 @@ downloads:
     url: https://archive.freebsd.org/old-releases/i386/14.3-RELEASE/base.txz
     extract: [lib/libc.so.7]
     sha256: 37ed97e913cac32dfbcc4c0182538a3e6aaa4d46ff8627987e15ff00c513f18a
+  - out: freebsd_aarch64_libc.so
+    url: https://archive.freebsd.org/old-releases/arm64/14.3-RELEASE/base.txz
+    extract: [lib/libc.so.7]
+  - out: freebsd_riscv64_libc.so
+    url: https://archive.freebsd.org/old-releases/riscv/14.3-RELEASE/base.txz
+    extract: [lib/libc.so.7]
 
   - out: openbsd_amd64_libc.so
     url: https://cdn.openbsd.org/pub/OpenBSD/7.8/amd64/base78.tgz
@@ -81,15 +108,24 @@ downloads:
     url: https://cdn.openbsd.org/pub/OpenBSD/7.8/i386/base78.tgz
     extract: [usr/lib/libc.so.102.0]
     sha256: 061bfd230cd81fd440bf4c28c17a16981fcc7353de94174048fe7aafb66ebb20
+  - out: openbsd_aarch64_libc.so
+    url: https://cdn.openbsd.org/pub/OpenBSD/7.8/arm64/base78.tgz
+    extract: [usr/lib/libc.so.102.0]
+  - out: openbsd_riscv64_libc.so
+    url: https://cdn.openbsd.org/pub/OpenBSD/7.8/riscv64/base78.tgz
+    extract: [usr/lib/libc.so.102.0]
 
   - out: netbsd_amd64_libc.so
-    url: https://cdn.netbsd.org/pub/NetBSD/NetBSD-10.1/amd64/binary/sets/base.tar.xz
+    url: https://archive.netbsd.org/pub/NetBSD-archive/NetBSD-10.1/amd64/binary/sets/base.tar.xz
     extract: [lib/libc.so.12.220.1]
     sha256: 6bcb82b18c0cb63d2b32a45744ca1d2b39f7a841642ccf0c97e59554c64279a1
   - out: netbsd_i386_libc.so
-    url: https://cdn.netbsd.org/pub/NetBSD/NetBSD-10.1/i386/binary/sets/base.tgz
+    url: https://archive.netbsd.org/pub/NetBSD-archive/NetBSD-10.1/i386/binary/sets/base.tgz
     extract: [lib/libc.so.12.220.1]
     sha256: 788e5deffff47c2d2477d20a5a33cae9abd5c3005708ffc6406889add306e036
+  - out: netbsd_aarch64_libc.so
+    url: https://archive.netbsd.org/pub/NetBSD-archive/NetBSD-10.1/evbarm-aarch64/binary/sets/base.tar.xz
+    extract: [lib/libc.so.12.220.1]
 
   # macOS libc lives in the dyld shared cache; extract it locally with ipsw
   # (needs macOS Sonoma). `platform` gates the command to that OS, and `arch`

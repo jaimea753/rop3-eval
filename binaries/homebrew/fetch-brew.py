@@ -463,29 +463,48 @@ def _macho_from_tree(root: str, exe_override: str | None,
         return exe, fh.read()
 
 
+def _run_7z(archive: str, dest: str) -> None:
+    """Fully extract `archive` into `dest` with 7-Zip — every member, no include
+    filter, so it works no matter how deep the app bundle is nested."""
+    os.makedirs(dest, exist_ok=True)
+    subprocess.run([_SEVENZIP, "x", "-y", f"-o{dest}", archive],
+                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+def _tree_has_app(root: str) -> bool:
+    return any(d.endswith(".app") for d, _dirs, _files in os.walk(root))
+
+
 def _extract_with_7z(blob: bytes, kind: str, exe_override: str | None,
                      app_hint: str | None) -> tuple[str, bytes]:
+    """Extract a macOS .app's main Mach-O from a .dmg/.pkg with 7-Zip.
+
+    A UDIF .dmg does not expose its files at the top level: 7-Zip lists the
+    filesystem as a nested volume (`2.hfs`, an Apple_HFS/APFS image), and a .pkg
+    nests a cpio `Payload`. Rather than filter on `Contents/MacOS` in one pass
+    (which matches nothing at the wrapper level, and depends on 7-Zip wildcard
+    semantics), extract each layer in full and descend into whatever containers
+    come out until an `.app` surfaces.
+    """
     if not _SEVENZIP:
-        raise FetchError(f"{kind} needs 7z/7zz on PATH (add p7zip to shell.nix)")
+        raise FetchError(f"{kind} needs 7z/7zz on PATH (add p7zip/_7zz to shell.nix)")
     with tempfile.TemporaryDirectory() as td:
         src = os.path.join(td, "artifact")
         with open(src, "wb") as fh:
             fh.write(blob)
-        outd = os.path.join(td, "x")
-        patterns = ["*/Contents/MacOS/*", "*/Contents/Info.plist"]
-        subprocess.run([_SEVENZIP, "x", "-y", f"-o{outd}", src, *patterns],
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        # .pkg payloads are a nested cpio.gz ("Payload"); unpack those too.
-        if kind == "pkg":
-            for dirpath, _, files in os.walk(outd):
+        queue, guard = [src], 0
+        while queue and guard < 8:
+            guard += 1
+            dest = os.path.join(td, f"x{guard}")
+            _run_7z(queue.pop(0), dest)
+            if _tree_has_app(dest):
+                return _macho_from_tree(dest, exe_override, app_hint)
+            # No app yet — this layer was a wrapper (.dmg -> volume, .pkg ->
+            # Payload -> cpio). Queue the containers it produced and go deeper.
+            for dirpath, _dirs, files in os.walk(dest):
                 for fn in files:
-                    if fn == "Payload":
-                        subprocess.run([_SEVENZIP, "x", "-y",
-                                        f"-o{os.path.join(dirpath, 'payload')}",
-                                        os.path.join(dirpath, fn), *patterns],
-                                       stdout=subprocess.DEVNULL,
-                                       stderr=subprocess.DEVNULL)
-        return _macho_from_tree(outd, exe_override, app_hint)
+                    queue.append(os.path.join(dirpath, fn))
+        raise FetchError("no .app bundle found in the extracted image")
 
 
 def app_main_macho(blob: bytes, url: str, exe_override: str | None,

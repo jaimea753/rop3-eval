@@ -7,7 +7,7 @@
 #
 # Homebrew only publishes macOS bottles, so only two architectures exist:
 # amd64 (x86_64, Intel) and aarch64 (arm64, Apple Silicon). The corpus is pinned
-# to one macOS release via `platforms:` below (Ventura, macOS 13). Bottles are
+# to one macOS release via `platforms:` below (Tahoe, macOS 26). Bottles are
 # resolved from ghcr.io's historical manifests (not the formulae.brew.sh API,
 # which has since dropped Ventura and every Intel-macOS bottle): for each formula
 # the newest version that still ships a <release> bottle is used. An entry may
@@ -25,17 +25,19 @@ output: ./binaries
 # is what the experiment driver's folder scan looks for.
 naming: "{name}_brew_{arch}"
 
-# Candidate bottle tags per architecture, newest macOS release first (the
-# portable `all` bottle is always tried last). The resolver takes the first tag
-# that has a bottle, so this fetches the LATEST macOS release each arch is built
-# for: aarch64 lands on Golden Gate (macOS 27), the current release. Apple
-# Silicon is where the latest lives — Golden Gate and Tahoe are arm64-only, and
-# Homebrew stopped building Intel bottles after Tahoe, so amd64 falls through to
-# its newest available release (Tahoe, macOS 26). Trim a list to one tag to pin
-# a single release instead.
+# Both architectures use the SAME macOS release — Tahoe (macOS 26), the latest —
+# so they are directly comparable. Reality from a bottle probe: Homebrew has
+# largely stopped building Intel (amd64) bottles, so at Tahoe (and at Sequoia,
+# identically) only ~a dozen core formulae still ship an Intel bottle, while
+# arm64 ships nearly all. Each formula below is therefore version-pinned to its
+# Tahoe bottle; the ~dozen with an Intel bottle (marked "dual-arch") are pinned
+# to that shared version so BOTH arches fetch the same build, and the rest are
+# arm64-only at this release (amd64 reports FAILED for them, which is expected).
+# A single release tag — no fallback list — keeps resolution deterministic.
+# Casks are universal vendor downloads sliced per arch, independent of this.
 platforms:
-  amd64:   [tahoe, sequoia, sonoma, ventura]
-  aarch64: [arm64_golden_gate, arm64_tahoe, arm64_sequoia, arm64_sonoma]
+  amd64:   [tahoe]
+  aarch64: [arm64_tahoe]
 
 # Formulae to pull from. Each entry is a Homebrew `name:` and the `binaries:`
 # (paths inside the bottle, which live under `<formula>/<version>/...`) to
@@ -43,53 +45,170 @@ platforms:
 # basename. The dylib version segment is globbed (e.g. libssl.*.dylib) so the
 # soname revision need not be pinned. Executables -> *_bin, libraries -> *.dylib.
 formulae:
+  # Each formula is pinned (`version:`) to its macOS Tahoe bottle for a frozen,
+  # reproducible corpus. Entries marked "dual-arch" still ship an Intel (amd64)
+  # bottle and are pinned to that shared version so both arches fetch the same
+  # build; the unmarked ones are arm64-only at Tahoe (amd64 reports FAILED,
+  # which is expected). Refresh the pins from `--dry-run` if you retarget.
   # --- core libraries ---------------------------------------------------- #
   - name: openssl@3
+    version: "3.6.3-2"           # dual-arch
     binaries:
       - { path: "*/lib/libssl.*.dylib",    name: "libssl_brew_{arch}.dylib" }
       - { path: "*/lib/libcrypto.*.dylib", name: "libcrypto_brew_{arch}.dylib" }
   - name: zlib
+    version: "1.3.2"
     binaries: [{ path: "*/lib/libz.*.dylib", name: "libz_brew_{arch}.dylib" }]
   - name: xz
+    version: "5.8.3"             # dual-arch
     binaries:
       - { path: "*/bin/xz",               name: "xz_brew_{arch}_bin" }
       - { path: "*/lib/liblzma.*.dylib",  name: "liblzma_brew_{arch}.dylib" }
   - name: zstd
+    version: "1.5.7_1-1"         # dual-arch
     binaries:
       - { path: "*/bin/zstd",             name: "zstd_brew_{arch}_bin" }
       - { path: "*/lib/libzstd.*.dylib",  name: "libzstd_brew_{arch}.dylib" }
   - name: pcre2
+    version: "10.47_1-1"         # dual-arch
     binaries: [{ path: "*/lib/libpcre2-8.*.dylib", name: "libpcre2_brew_{arch}.dylib" }]
   - name: gmp
+    version: "6.3.0"             # dual-arch
     binaries: [{ path: "*/lib/libgmp.*.dylib", name: "libgmp_brew_{arch}.dylib" }]
   - name: readline
+    version: "8.3.3-1"           # dual-arch
     binaries: [{ path: "*/lib/libreadline.*.dylib", name: "libreadline_brew_{arch}.dylib" }]
   - name: libpng
+    version: "1.6.59"
     binaries: [{ path: "*/lib/libpng16.*.dylib", name: "libpng_brew_{arch}.dylib" }]
   - name: freetype
+    version: "2.15.0"
     binaries: [{ path: "*/lib/libfreetype.*.dylib", name: "libfreetype_brew_{arch}.dylib" }]
+  - name: libffi
+    version: "3.8.0-1"           # dual-arch
+    binaries: [{ path: "*/lib/libffi.*.dylib", name: "libffi_brew_{arch}.dylib" }]
+  - name: jpeg-turbo
+    version: "3.2.1"
+    binaries: [{ path: "*/lib/libjpeg.*.dylib", name: "libjpeg_brew_{arch}.dylib" }]
+  - name: libtiff
+    version: "4.7.2-2"
+    binaries: [{ path: "*/lib/libtiff.*.dylib", name: "libtiff_brew_{arch}.dylib" }]
+  - name: glib
+    version: "2.90.1-1"
+    binaries: [{ path: "*/lib/libglib-2.0.*.dylib", name: "libglib_brew_{arch}.dylib" }]
+  - name: harfbuzz
+    version: "15.0.0_1"
+    binaries: [{ path: "*/lib/libharfbuzz.*.dylib", name: "libharfbuzz_brew_{arch}.dylib" }]
+  - name: cairo
+    version: "1.18.6"
+    binaries: [{ path: "*/lib/libcairo.*.dylib", name: "libcairo_brew_{arch}.dylib" }]
+  - name: libsodium
+    version: "1.0.22"
+    binaries: [{ path: "*/lib/libsodium.*.dylib", name: "libsodium_brew_{arch}.dylib" }]
+  - name: lz4
+    version: "1.10.0-1"          # dual-arch
+    binaries: [{ path: "*/lib/liblz4.*.dylib", name: "liblz4_brew_{arch}.dylib" }]
+  - name: brotli
+    version: "1.2.1"
+    binaries: [{ path: "*/lib/libbrotlidec.*.dylib", name: "libbrotlidec_brew_{arch}.dylib" }]
+  - name: ncurses
+    version: "6.6-1"             # dual-arch
+    binaries: [{ path: "*/lib/libncursesw.*.dylib", name: "libncurses_brew_{arch}.dylib" }]
+  - name: nettle
+    version: "4.0"
+    binaries: [{ path: "*/lib/libnettle.*.dylib", name: "libnettle_brew_{arch}.dylib" }]
+  - name: oniguruma
+    version: "6.9.10"
+    binaries: [{ path: "*/lib/libonig.*.dylib", name: "libonig_brew_{arch}.dylib" }]
+  - name: libyaml
+    version: "0.2.5"
+    binaries: [{ path: "*/lib/libyaml-0.*.dylib", name: "libyaml_brew_{arch}.dylib" }]
+  - name: libarchive
+    version: "3.8.10"
+    binaries: [{ path: "*/lib/libarchive.*.dylib", name: "libarchive_brew_{arch}.dylib" }]
+  - name: expat
+    version: "2.9.0"
+    binaries: [{ path: "*/lib/libexpat.*.dylib", name: "libexpat_brew_{arch}.dylib" }]
 
   # --- executables + their libraries ------------------------------------- #
   - name: sqlite
+    version: "3.53.4-1"          # dual-arch
     binaries:
       - { path: "*/bin/sqlite3",            name: "sqlite3_brew_{arch}_bin" }
       - { path: "*/lib/libsqlite3.*.dylib", name: "libsqlite3_brew_{arch}.dylib" }
   - name: curl
+    version: "8.23.0"
     binaries:
       - { path: "*/bin/curl",             name: "curl_brew_{arch}_bin" }
       - { path: "*/lib/libcurl.*.dylib",  name: "libcurl_brew_{arch}.dylib" }
   - name: bash
+    version: "5.3.20"
     binaries: [{ path: "*/bin/bash", name: "bash_brew_{arch}_bin" }]
   - name: wget
+    version: "1.25.0-2"
     binaries: [{ path: "*/bin/wget", name: "wget_brew_{arch}_bin" }]
   - name: git
+    version: "2.56.0_2"
     binaries: [{ path: "*/bin/git", name: "git_brew_{arch}_bin" }]
   - name: vim
+    version: "9.2.1250"
     binaries: [{ path: "*/bin/vim", name: "vim_brew_{arch}_bin" }]
   - name: nginx
+    version: "1.31.8"
     binaries: [{ path: "*/bin/nginx", name: "nginx_brew_{arch}_bin" }]
   - name: nano
+    version: "9.3"
     binaries: [{ path: "*/bin/nano", name: "nano_brew_{arch}_bin" }]
+  - name: jq
+    version: "1.8.2-1"
+    binaries:
+      - { path: "*/bin/jq",            name: "jq_brew_{arch}_bin" }
+      - { path: "*/lib/libjq.*.dylib", name: "libjq_brew_{arch}.dylib" }
+  - name: ripgrep                 # Rust
+    version: "15.2.0-1"
+    binaries: [{ path: "*/bin/rg", name: "ripgrep_brew_{arch}_bin" }]
+  - name: fd                      # Rust
+    version: "10.5.0"
+    binaries: [{ path: "*/bin/fd", name: "fd_brew_{arch}_bin" }]
+  - name: gh                      # Go
+    version: "2.103.3"
+    binaries: [{ path: "*/bin/gh", name: "gh_brew_{arch}_bin" }]
+  - name: go                      # Go toolchain (bin/go symlinks into libexec)
+    version: "1.27.3"
+    binaries: [{ path: "*/bin/go", name: "go_brew_{arch}_bin" }]
+  - name: node                    # V8 / C++
+    version: "26.12.1_1"
+    binaries: [{ path: "*/bin/node", name: "node_brew_{arch}_bin" }]
+  - name: lua
+    version: "5.5.1"
+    binaries: [{ path: "*/bin/lua", name: "lua_brew_{arch}_bin" }]
+  - name: tmux
+    version: "3.8"
+    binaries: [{ path: "*/bin/tmux", name: "tmux_brew_{arch}_bin" }]
+  - name: htop
+    version: "3.5.3"
+    binaries: [{ path: "*/bin/htop", name: "htop_brew_{arch}_bin" }]
+  - name: tree
+    version: "2.3.2"
+    binaries: [{ path: "*/bin/tree", name: "tree_brew_{arch}_bin" }]
+  - name: gnupg
+    version: "2.5.24_1"
+    binaries: [{ path: "*/bin/gpg", name: "gpg_brew_{arch}_bin" }]
+  - name: openssh
+    version: "10.6p1_1"
+    binaries: [{ path: "*/bin/ssh", name: "ssh_brew_{arch}_bin" }]
+  - name: gawk
+    version: "5.4.1"
+    binaries: [{ path: "*/bin/gawk", name: "gawk_brew_{arch}_bin" }]
+  - name: make
+    version: "4.4.1-1"           # dual-arch
+    binaries: [{ path: "*/bin/gmake", name: "gmake_brew_{arch}_bin" }]
+  - name: ffmpeg
+    version: "9.0.2_1"
+    binaries: [{ path: "*/bin/ffmpeg", name: "ffmpeg_brew_{arch}_bin" }]
+  - name: redis
+    version: "8.10.3"
+    binaries: [{ path: "*/bin/redis-server", name: "redis-server_brew_{arch}_bin" }]
 
 # Desktop GUI apps (Homebrew casks). Each cask's main Mach-O executable
 # (Contents/MacOS/<CFBundleExecutable>) is pulled from the app bundle and, since
@@ -105,3 +224,11 @@ casks:
   - name: gimp                  # .dmg
   - name: keepassxc             # .dmg
   - name: rectangle             # .dmg
+  - name: slack                 # .dmg
+  - name: spotify               # .dmg
+  - name: discord               # .dmg
+  - name: signal                # .dmg
+  - name: obs                   # .dmg
+  - name: blender               # .dmg
+  - name: inkscape              # .dmg
+  - name: sublime-text          # .dmg

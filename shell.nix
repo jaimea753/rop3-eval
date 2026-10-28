@@ -6,6 +6,7 @@ let
   runtimeLibs = with pkgs; [
     stdenv.cc.cc.lib # libstdc++.so.6, libgcc_s
     capstone         # libcapstone.so: ropium's C build links & loads it
+    libarchive       # libarchive.so: binaries/coreutils libarchive-c binding
     zlib
     glib
     libGL
@@ -34,6 +35,8 @@ pkgs.mkShell {
     cmake
     pkg-config
     git
+    _7zz            # 7zz: extracts Homebrew-cask .dmg/.pkg (APFS/HFS) app bundles
+    p7zip           # 7z fallback for older image formats
   ])
   ++ runtimeLibs;
 

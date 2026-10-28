@@ -1,0 +1,90 @@
+# URLs / build commands and extraction paths for coreutils_downloaders.py.
+#
+# One statically-linked multicall binary per coreutils implementation, so their
+# ROP-gadget supply is comparable on an equal footing:
+#   * GNU coreutils  — built from source with --enable-single-binary (no
+#                      canonical prebuilt static exists); host architecture only.
+#   * BSD            — FreeBSD /rescue/rescue, the static crunchgen multicall of
+#                      the base utilities, taken from a RELEASE base.txz.
+#   * busybox        — Debian's static `busybox-static` package.
+#   * Rust uutils    — the musl static multicall `coreutils` from a tagged release.
+#
+# Each entry has an `out` (named <impl>_<arch>_bin so the driver's folder scan
+# finds it) produced either by `url` + `extract` (download and pull the member
+# path out; nested archives list the outer member first) or by `command` (build
+# locally). Reproducibility comes from the pinned URLs: a tagged GitHub asset, a
+# FreeBSD RELEASE tree, a GNU release tarball, and content-addressed
+# snapshot.debian.org /file/ hashes. An optional `sha256` of the produced file
+# is checked when present (a mismatch only warns).
+downloads:
+
+  # --- busybox: Debian busybox-static (static) ---------------------------- #
+  # URLs are snapshot.debian.org content-addressed /file/<sha1> links, so the
+  # exact .deb is pinned forever (busybox-static 1.37.0-10). The static binary
+  # lives at /bin/busybox inside the package's data.tar.
+  - out: busybox_amd64_bin
+    url: https://snapshot.debian.org/file/565a881ebf36c00737551c6292d5849c1ad15408
+    extract: [data.tar, usr/bin/busybox]
+  - out: busybox_x86_bin
+    url: https://snapshot.debian.org/file/10d5afa16ca8ace706966bc0eae8f711b78d4971
+    extract: [data.tar, usr/bin/busybox]
+  - out: busybox_aarch64_bin
+    url: https://snapshot.debian.org/file/7681b91c30edaeff47777618090d4a0e561542d1
+    extract: [data.tar, usr/bin/busybox]
+  - out: busybox_riscv64_bin
+    url: https://snapshot.debian.org/file/f5b6a9714d12468cca790731220d72dc1ece2641
+    extract: [data.tar, usr/bin/busybox]
+
+  # --- Rust uutils/coreutils: musl static multicall ----------------------- #
+  # Tagged GitHub release 0.12.0; the `coreutils` binary sits under a top-level
+  # dir named after the target triple.
+  - out: uutils_coreutils_amd64_bin
+    url: https://github.com/uutils/coreutils/releases/download/0.12.0/coreutils-0.12.0-x86_64-unknown-linux-musl.tar.gz
+    extract: [coreutils-0.12.0-x86_64-unknown-linux-musl/coreutils]
+  - out: uutils_coreutils_x86_bin
+    url: https://github.com/uutils/coreutils/releases/download/0.12.0/coreutils-0.12.0-i686-unknown-linux-musl.tar.gz
+    extract: [coreutils-0.12.0-i686-unknown-linux-musl/coreutils]
+  - out: uutils_coreutils_aarch64_bin
+    url: https://github.com/uutils/coreutils/releases/download/0.12.0/coreutils-0.12.0-aarch64-unknown-linux-musl.tar.gz
+    extract: [coreutils-0.12.0-aarch64-unknown-linux-musl/coreutils]
+  - out: uutils_coreutils_riscv64_bin
+    url: https://github.com/uutils/coreutils/releases/download/0.12.0/coreutils-0.12.0-riscv64gc-unknown-linux-musl.tar.gz
+    extract: [coreutils-0.12.0-riscv64gc-unknown-linux-musl/coreutils]
+
+  # --- BSD: FreeBSD 15.1-RELEASE /rescue/rescue (static) ------------------ #
+  # base.txz is ~155 MB; only /rescue/rescue is pulled out. No i386 entry —
+  # FreeBSD 15.x no longer ships a 32-bit x86 base.
+  - out: bsd_rescue_amd64_bin
+    url: https://download.freebsd.org/releases/amd64/amd64/15.1-RELEASE/base.txz
+    extract: [rescue/rescue]
+  - out: bsd_rescue_aarch64_bin
+    url: https://download.freebsd.org/releases/arm64/aarch64/15.1-RELEASE/base.txz
+    extract: [rescue/rescue]
+  - out: bsd_rescue_riscv64_bin
+    url: https://download.freebsd.org/releases/riscv/riscv64/15.1-RELEASE/base.txz
+    extract: [rescue/rescue]
+
+  # --- GNU coreutils: Debian-compiled tools, as a per-arch bundle --------- #
+  # Debian ships GNU coreutils as ~100 individual, dynamically-linked tools
+  # (no multicall binary), so each arch is a bundle directory holding the whole
+  # /usr/bin tool set; the driver analyses a subfolder's files together as one
+  # target, keeping GNU one comparable unit. `archive` descends into the .deb's
+  # data.tar, `members` globs the tools out. URLs are content-addressed
+  # snapshot.debian.org /file/<sha1> links (coreutils 9.7-3). These binaries
+  # are dynamically linked, unlike the three static multicall binaries above.
+  - out: gnu_coreutils_amd64
+    url: https://snapshot.debian.org/file/b030cfa538f5265585eb5d8a08af1cc65d855dab
+    archive: [data.tar]
+    members: ["usr/bin/*", "usr/sbin/*"]
+  - out: gnu_coreutils_x86
+    url: https://snapshot.debian.org/file/a87937a799364f1dc2fddd9b4cc86462e8887e82
+    archive: [data.tar]
+    members: ["usr/bin/*", "usr/sbin/*"]
+  - out: gnu_coreutils_aarch64
+    url: https://snapshot.debian.org/file/907c52e0edf6a3c94f256c547e0bbb78fb97caa5
+    archive: [data.tar]
+    members: ["usr/bin/*", "usr/sbin/*"]
+  - out: gnu_coreutils_riscv64
+    url: https://snapshot.debian.org/file/504e81c386cd17d00f1c0462b8960bfef2ac16fa
+    archive: [data.tar]
+    members: ["usr/bin/*", "usr/sbin/*"]

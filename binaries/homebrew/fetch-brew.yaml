@@ -1,0 +1,107 @@
+# ---------------------------------------------------------------------------
+# fetch-brew.py configuration
+#
+# Downloads Mach-O binaries out of macOS Homebrew bottles, resolved via the
+# formulae.brew.sh API and pulled from ghcr.io. Run with:
+#   python fetch-brew.py --config fetch-brew.yaml
+#
+# Homebrew only publishes macOS bottles, so only two architectures exist:
+# amd64 (x86_64, Intel) and aarch64 (arm64, Apple Silicon). The corpus is pinned
+# to one macOS release via `platforms:` below (Ventura, macOS 13). Bottles are
+# resolved from ghcr.io's historical manifests (not the formulae.brew.sh API,
+# which has since dropped Ventura and every Intel-macOS bottle): for each formula
+# the newest version that still ships a <release> bottle is used. An entry may
+# add a `version:` to pin that exact bottle instead; the resolved version +
+# bottle sha256 are recorded in manifest.json either way.
+# ---------------------------------------------------------------------------
+
+# Where extracted binaries land (flat, named by each binary's `name:` so the
+# filename tags it by formula + arch), plus a manifest.json at the root.
+output: ./binaries
+
+# Default output-name template. Placeholders: {name}/{formula} (the formula with
+# any @version flattened), {arch}, {basename}, {stem}, {ext}. Always overridden
+# per-binary below so executables end in `_bin` and libraries in `.dylib`, which
+# is what the experiment driver's folder scan looks for.
+naming: "{name}_brew_{arch}"
+
+# Candidate bottle tags per architecture, newest macOS release first (the
+# portable `all` bottle is always tried last). The resolver takes the first tag
+# that has a bottle, so this fetches the LATEST macOS release each arch is built
+# for: aarch64 lands on Golden Gate (macOS 27), the current release. Apple
+# Silicon is where the latest lives — Golden Gate and Tahoe are arm64-only, and
+# Homebrew stopped building Intel bottles after Tahoe, so amd64 falls through to
+# its newest available release (Tahoe, macOS 26). Trim a list to one tag to pin
+# a single release instead.
+platforms:
+  amd64:   [tahoe, sequoia, sonoma, ventura]
+  aarch64: [arm64_golden_gate, arm64_tahoe, arm64_sequoia, arm64_sonoma]
+
+# Formulae to pull from. Each entry is a Homebrew `name:` and the `binaries:`
+# (paths inside the bottle, which live under `<formula>/<version>/...`) to
+# extract. A path may be an exact path, a glob (`*` crosses `/`), or a bare
+# basename. The dylib version segment is globbed (e.g. libssl.*.dylib) so the
+# soname revision need not be pinned. Executables -> *_bin, libraries -> *.dylib.
+formulae:
+  # --- core libraries ---------------------------------------------------- #
+  - name: openssl@3
+    binaries:
+      - { path: "*/lib/libssl.*.dylib",    name: "libssl_brew_{arch}.dylib" }
+      - { path: "*/lib/libcrypto.*.dylib", name: "libcrypto_brew_{arch}.dylib" }
+  - name: zlib
+    binaries: [{ path: "*/lib/libz.*.dylib", name: "libz_brew_{arch}.dylib" }]
+  - name: xz
+    binaries:
+      - { path: "*/bin/xz",               name: "xz_brew_{arch}_bin" }
+      - { path: "*/lib/liblzma.*.dylib",  name: "liblzma_brew_{arch}.dylib" }
+  - name: zstd
+    binaries:
+      - { path: "*/bin/zstd",             name: "zstd_brew_{arch}_bin" }
+      - { path: "*/lib/libzstd.*.dylib",  name: "libzstd_brew_{arch}.dylib" }
+  - name: pcre2
+    binaries: [{ path: "*/lib/libpcre2-8.*.dylib", name: "libpcre2_brew_{arch}.dylib" }]
+  - name: gmp
+    binaries: [{ path: "*/lib/libgmp.*.dylib", name: "libgmp_brew_{arch}.dylib" }]
+  - name: readline
+    binaries: [{ path: "*/lib/libreadline.*.dylib", name: "libreadline_brew_{arch}.dylib" }]
+  - name: libpng
+    binaries: [{ path: "*/lib/libpng16.*.dylib", name: "libpng_brew_{arch}.dylib" }]
+  - name: freetype
+    binaries: [{ path: "*/lib/libfreetype.*.dylib", name: "libfreetype_brew_{arch}.dylib" }]
+
+  # --- executables + their libraries ------------------------------------- #
+  - name: sqlite
+    binaries:
+      - { path: "*/bin/sqlite3",            name: "sqlite3_brew_{arch}_bin" }
+      - { path: "*/lib/libsqlite3.*.dylib", name: "libsqlite3_brew_{arch}.dylib" }
+  - name: curl
+    binaries:
+      - { path: "*/bin/curl",             name: "curl_brew_{arch}_bin" }
+      - { path: "*/lib/libcurl.*.dylib",  name: "libcurl_brew_{arch}.dylib" }
+  - name: bash
+    binaries: [{ path: "*/bin/bash", name: "bash_brew_{arch}_bin" }]
+  - name: wget
+    binaries: [{ path: "*/bin/wget", name: "wget_brew_{arch}_bin" }]
+  - name: git
+    binaries: [{ path: "*/bin/git", name: "git_brew_{arch}_bin" }]
+  - name: vim
+    binaries: [{ path: "*/bin/vim", name: "vim_brew_{arch}_bin" }]
+  - name: nginx
+    binaries: [{ path: "*/bin/nginx", name: "nginx_brew_{arch}_bin" }]
+  - name: nano
+    binaries: [{ path: "*/bin/nano", name: "nano_brew_{arch}_bin" }]
+
+# Desktop GUI apps (Homebrew casks). Each cask's main Mach-O executable
+# (Contents/MacOS/<CFBundleExecutable>) is pulled from the app bundle and, since
+# these are usually universal binaries, sliced per arch -> <token>_cask_<arch>_bin.
+# .zip casks need only the stdlib; .dmg/.pkg casks need a 7z/7zz (p7zip) on PATH
+# (shell.nix provides it). An optional `executable:` overrides the Info.plist name.
+casks:
+  - name: iterm2                # .zip
+  - name: visual-studio-code    # .zip (served without a .zip extension)
+  - name: firefox               # .dmg
+  - name: google-chrome         # .dmg
+  - name: vlc                   # .dmg
+  - name: gimp                  # .dmg
+  - name: keepassxc             # .dmg
+  - name: rectangle             # .dmg

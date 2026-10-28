@@ -1,0 +1,25 @@
+name: Homebrew (macOS) binaries — ROP gadget presence
+
+# Mach-O binaries pulled from Homebrew bottles by binaries/homebrew/fetch-brew.py.
+# presence mode: an arch × operation matrix. Homebrew only ships macOS bottles,
+# so the only arches present are x86_64 (Intel) and aarch64 (Apple Silicon).
+libraries: ./binaries/homebrew/binaries
+
+mode: presence
+
+depth:
+  default: null
+  x86: 10
+  x86_64: 10
+  aarch64: 24
+  riscv64: 24
+
+rop3_flags:
+  ret_imm: false
+  reg_aliases: false
+  keep_contradictory: false
+  avoid_canary: false
+  framed: true
+  all: false
+  allow_undeterministic: false
+  allow_complex_mem: false

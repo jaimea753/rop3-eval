@@ -1,0 +1,26 @@
+name: coreutils implementations — ROP gadget counts
+
+# One unit per implementation, produced by coreutils_downloaders.py: static
+# multicall binaries for BSD/rescue, busybox and Rust uutils (scanned by the
+# *_bin suffix), and a per-arch bundle directory for GNU (Debian's individual,
+# dynamically-linked tools, which the folder scan analyses together as one
+# target). ops mode: one row per unit, columns are operations, so the four
+# implementations are directly comparable.
+libraries: ./binaries/coreutils
+
+depth:
+  default: null
+  x86: 10
+  x86_64: 10
+  aarch64: 24
+  riscv64: 24
+
+rop3_flags:
+  ret_imm: true
+  reg_aliases: true
+  keep_contradictory: true
+  avoid_canary: false
+  framed: false
+  all: false
+  allow_undeterministic: false
+  allow_complex_mem: false

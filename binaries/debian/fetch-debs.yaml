@@ -4,6 +4,12 @@
 # Downloads library/executable binaries out of Debian packages, straight from
 # snapshot.debian.org, so a given config always produces byte-for-byte
 # identical outputs. Run with:  python fetch-debs.py --config fetch-debs.yaml
+#
+# NOTE ON VERSIONED NAMES: entries tagged "[version-pinned]" carry a numeric
+# suffix in the package name and/or SONAME that tracks the snapshot (exactly
+# like Debian's 64-bit time_t "t64" rename did). The suffixes below are valid
+# for an early-2024 sid snapshot. If you move `snapshot:` to a real Debian 13
+# (trixie) date, re-resolve those suffixes and the t64 renames together.
 # ---------------------------------------------------------------------------
 
 # The snapshot to pin every download to (a single value => full reproducibility).
@@ -54,33 +60,210 @@ component: main
 #   * a bare basename            libc.so.6        (matched anywhere in the .deb)
 #   * a {path:, name:} mapping   to force the output filename
 # In-package symlinks are followed, so libc.so.6 yields the real libc bytes.
+#
+# ARCH COVERAGE: core libs + small executables resolve on all four arches;
+# the big GUI apps/engines (firefox, chromium, libreoffice, webkit, blender,
+# qt-webengine, java, wireshark, ...) are effectively amd64+arm64.
 packages:
-  # A shared library. The arch-specific dir (x86_64-linux-gnu, aarch64-linux-gnu,
-  # riscv64-linux-gnu, i386-linux-gnu) is matched by the leading glob. `name:`
-  # forces the classic examples/ naming used by run-experiments.py.
+
+  # ===== Core system libraries (the primary gadget mines) =================
   - name: libc6
-    binaries:
-      - path: "*/libc.so.6"
-        name: "libc_debian_{arch}.so"   # note: {arch} is filled in by fetch-debs
+    binaries: [{ path: "*/libc.so.6", name: "libc_debian_{arch}.so" }]
+  - name: libstdc++6
+    binaries: [{ path: "libstdc++.so.6",  name: "libstdc++_debian_{arch}.so" }]
+  - name: libgcc-s1
+    binaries: [{ path: "libgcc_s.so.1",   name: "libgcc_s_debian_{arch}.so" }]
+  - name: libglib2.0-0
+    binaries: [{ path: "libglib-2.0.so.0", name: "libglib_debian_{arch}.so" }]
+  - name: libsystemd0
+    binaries: [{ path: "libsystemd.so.0", name: "libsystemd_debian_{arch}.so" }]
 
-  # # A couple of executables from coreutils. Bare basenames match the binary
-  # # wherever the package puts it (/bin vs /usr/bin varies across snapshots by
-  # # usr-merge state), so these survive that churn.
-  # - name: coreutils
-  #   binaries:
-  #     - ls
-  #     - cat
+  # ===== Other ubiquitous runtime libraries (all four arches) =============
+  - name: libffi8
+    binaries: [{ path: "libffi.so.8",      name: "libffi_debian_{arch}.so" }]
+  - name: libexpat1
+    binaries: [{ path: "libexpat.so.1",    name: "libexpat_debian_{arch}.so" }]
+  - name: libdbus-1-3
+    binaries: [{ path: "libdbus-1.so.3",   name: "libdbus_debian_{arch}.so" }]
+  - name: libudev1
+    binaries: [{ path: "libudev.so.1",     name: "libudev_debian_{arch}.so" }]
+  - name: libtinfo6
+    binaries: [{ path: "libtinfo.so.6",    name: "libtinfo_debian_{arch}.so" }]
+  - name: libreadline8
+    binaries: [{ path: "libreadline.so.8", name: "libreadline_debian_{arch}.so" }]
+  - name: libgmp10
+    binaries: [{ path: "libgmp.so.10",     name: "libgmp_debian_{arch}.so" }]
+  - name: libbz2-1.0
+    binaries: [{ path: "libbz2.so.1.0",    name: "libbz2_debian_{arch}.so" }]
+  - name: libcap2
+    binaries: [{ path: "libcap.so.2",      name: "libcap_debian_{arch}.so" }]
+  - name: libmount1
+    binaries: [{ path: "libmount.so.1",    name: "libmount_debian_{arch}.so" }]
 
+  # ===== Compression / crypto / text ======================================
   - name: zlib1g
+    binaries: [{ path: "libz.so.1",        name: "libz_debian_{arch}.so" }]
+  - name: liblzma5
+    binaries: [{ path: "liblzma.so.5",     name: "liblzma_debian_{arch}.so" }]
+  - name: libzstd1
+    binaries: [{ path: "libzstd.so.1",     name: "libzstd_debian_{arch}.so" }]
+  - name: libssl3
     binaries:
-      - libz.so.1
+      - { path: "libssl.so.3",    name: "libssl_debian_{arch}.so" }
+      - { path: "libcrypto.so.3", name: "libcrypto_debian_{arch}.so" }
+  - name: libpcre2-8-0
+    binaries: [{ path: "libpcre2-8.so.0",  name: "libpcre2_debian_{arch}.so" }]
+  - name: libxml2
+    binaries: [{ path: "libxml2.so.2",     name: "libxml2_debian_{arch}.so" }]
+  - name: libgcrypt20
+    binaries: [{ path: "libgcrypt.so.20",  name: "libgcrypt_debian_{arch}.so" }]
+  - name: libgnutls30
+    binaries: [{ path: "libgnutls.so.30",  name: "libgnutls_debian_{arch}.so" }]
+  - name: libnettle8
+    binaries: [{ path: "libnettle.so.*",   name: "libnettle_debian_{arch}.so" }]
+  - name: libssh2-1
+    binaries: [{ path: "libssh2.so.1",     name: "libssh2_debian_{arch}.so" }]
 
+  # ===== Media / image / font parsing (classic attack surface) ============
+  - name: libpng16-16
+    binaries: [{ path: "libpng16.so.16",   name: "libpng16_debian_{arch}.so" }]
+  - name: libjpeg62-turbo
+    binaries: [{ path: "libjpeg.so.62",    name: "libjpeg_debian_{arch}.so" }]
+  - name: libfreetype6
+    binaries: [{ path: "libfreetype.so.6", name: "libfreetype_debian_{arch}.so" }]
+  - name: libtiff6
+    binaries: [{ path: "libtiff.so.6",     name: "libtiff_debian_{arch}.so" }]
+  - name: libwebp7
+    binaries: [{ path: "libwebp.so.7",     name: "libwebp_debian_{arch}.so" }]
+  - name: libharfbuzz0b
+    binaries: [{ path: "libharfbuzz.so.0", name: "libharfbuzz_debian_{arch}.so" }]
+  - name: libfontconfig1
+    binaries: [{ path: "libfontconfig.so.1", name: "libfontconfig_debian_{arch}.so" }]
+  - name: libcairo2
+    binaries: [{ path: "libcairo.so.2",    name: "libcairo_debian_{arch}.so" }]
+  - name: libgdk-pixbuf-2.0-0
+    binaries: [{ path: "libgdk_pixbuf-2.0.so.0", name: "libgdkpixbuf_debian_{arch}.so" }]
+  - name: libpango-1.0-0
+    binaries: [{ path: "libpango-1.0.so.0", name: "libpango_debian_{arch}.so" }]
+
+  # ===== Database / HTTP client ===========================================
+  - name: libsqlite3-0
+    binaries: [{ path: "libsqlite3.so.0",  name: "libsqlite3_debian_{arch}.so" }]
+  - name: libcurl4
+    binaries: [{ path: "libcurl.so.4",     name: "libcurl_debian_{arch}.so" }]
+
+  # ===== GUI toolkits (deep, C++-heavy gadget sets) =======================
+  - name: libgtk-3-0
+    binaries: [{ path: "libgtk-3.so.0",    name: "libgtk3_debian_{arch}.so" }]
+  - name: libqt6core6
+    binaries: [{ path: "libQt6Core.so.6",  name: "libQt6Core_debian_{arch}.so" }]
+  - name: libqt6gui6
+    binaries: [{ path: "libQt6Gui.so.6",   name: "libQt6Gui_debian_{arch}.so" }]
+  - name: libqt6webenginecore6
+    binaries: [{ path: "libQt6WebEngineCore.so.6", name: "libQt6WebEngineCore_debian_{arch}.so" }]
+
+  # ===== Interpreter runtimes =============================================
+  - name: libpython3.11                      # [version-pinned] 3.11 -> 3.12 ...
+    binaries: [{ path: "*/libpython3.*.so.1.0", name: "libpython3_debian_{arch}.so" }]
+  - name: nodejs
+    binaries: [{ path: "nodejs",           name: "node_debian_{arch}" }]
+
+  # ===== Big applications: browsers / office / init =======================
   - name: firefox-esr
-    binaries:
-      - path: "usr/lib/firefox-esr/libxul.so"
-        name: "libxul_debian_{arch}.so"
-
+    binaries: [{ path: "usr/lib/firefox-esr/libxul.so", name: "libxul_debian_{arch}.so" }]
+  - name: chromium
+    binaries: [{ path: "usr/lib/chromium/chromium", name: "chromium_debian_{arch}" }]
   - name: libreoffice-core
+    binaries: [{ path: "usr/lib/libreoffice/program/libmergedlo.so", name: "libmergedlo_debian_{arch}.so" }]
+  - name: systemd
+    binaries: [{ path: "usr/lib/systemd/systemd", name: "systemd_debian_{arch}" }]
+
+  # ===== Big desktop apps — gadgets taken from whichever component hosts
+  #       the bulk of the code (lib vs. main binary), à la libmergedlo ======
+  - name: libwebkit2gtk-4.1-0
+    binaries: [{ path: "libwebkit2gtk-4.1.so.0", name: "libwebkit2gtk_debian_{arch}.so" }]
+  - name: libjavascriptcoregtk-4.1-0
+    binaries: [{ path: "libjavascriptcoregtk-4.1.so.0", name: "libjsc_debian_{arch}.so" }]
+  - name: blender
+    binaries: [{ path: "blender",          name: "blender_debian_{arch}" }]
+  - name: gimp
+    binaries: [{ path: "gimp",             name: "gimp_debian_{arch}" }]
+  - name: inkscape
+    binaries: [{ path: "*/libinkscape_base.so", name: "libinkscape_base_debian_{arch}.so" }]
+
+  # ===== Popular servers / daemons (realism; incl. ROPNN/ropbot targets) ==
+  - name: nginx-core
+    binaries: [{ path: "nginx",            name: "nginx_debian_{arch}" }]
+  - name: apache2-bin
+    binaries: [{ path: "apache2",          name: "apache2_debian_{arch}" }]
+  - name: openssh-server
+    binaries: [{ path: "sshd",             name: "sshd_debian_{arch}" }]
+  - name: vsftpd
+    binaries: [{ path: "vsftpd",           name: "vsftpd_debian_{arch}" }]
+  - name: proftpd-core
+    binaries: [{ path: "proftpd",          name: "proftpd_debian_{arch}" }]
+  - name: dnsmasq-base
+    binaries: [{ path: "dnsmasq",          name: "dnsmasq_debian_{arch}" }]
+  - name: lighttpd
+    binaries: [{ path: "lighttpd",         name: "lighttpd_debian_{arch}" }]
+  - name: redis-server
+    binaries: [{ path: "redis-server",     name: "redis_debian_{arch}" }]
+  - name: memcached
+    binaries: [{ path: "memcached",        name: "memcached_debian_{arch}" }]
+  - name: haproxy
+    binaries: [{ path: "haproxy",          name: "haproxy_debian_{arch}" }]
+  - name: samba
+    binaries: [{ path: "smbd",             name: "smbd_debian_{arch}" }]
+  - name: bind9
+    binaries: [{ path: "named",            name: "named_debian_{arch}" }]
+  - name: openvpn
+    binaries: [{ path: "openvpn",          name: "openvpn_debian_{arch}" }]
+
+  # ===== High-POPCON executables (classic ROP targets; some setuid) =======
+  - name: bash
+    binaries: [{ path: "bash",             name: "bash_debian_{arch}" }]
+  - name: sudo
     binaries:
-      - path: "usr/lib/libreoffice/program/libmergedlo.so"
-        name: "libmergedlo_debian_{arch}.so"
+      - { path: "*/sudoers.so",       name: "sudoers_debian_{arch}.so" }
+      - { path: "*/libsudo_util.so*", name: "libsudo_util_debian_{arch}.so" }
+  - name: openssl
+    binaries: [{ path: "openssl",          name: "openssl_debian_{arch}" }]
+  - name: curl
+    binaries: [{ path: "curl",             name: "curl_debian_{arch}" }]
+  - name: git
+    binaries: [{ path: "git",              name: "git_debian_{arch}" }]
+  - name: perl-base
+    binaries: [{ path: "perl",             name: "perl_debian_{arch}" }]
+  - name: passwd                            # setuid-root
+    binaries: [{ path: "passwd",           name: "passwd_debian_{arch}" }]
+  - name: util-linux                        # provides mount/umount (setuid)
+    binaries: [{ path: "mount",            name: "mount_debian_{arch}" }]
+  - name: iputils-ping
+    binaries: [{ path: "ping",             name: "ping_debian_{arch}" }]
+  - name: gdb
+    binaries: [{ path: "gdb",              name: "gdb_debian_{arch}" }]
+  - name: qemu-system-x86
+    binaries: [{ path: "qemu-system-x86_64", name: "qemu_debian_{arch}" }]
+
+  # ===== Version-pinned deep mines =========
+  - name: libicu72
+    binaries:
+      - { path: "*/libicuuc.so.*",   name: "libicuuc_debian_{arch}.so" }
+      - { path: "*/libicui18n.so.*", name: "libicui18n_debian_{arch}.so" }
+  - name: libllvm17
+    binaries: [{ path: "*/libLLVM-*.so*",    name: "libLLVM_debian_{arch}.so" }]
+  - name: libavcodec60
+    binaries: [{ path: "*/libavcodec.so.*",  name: "libavcodec_debian_{arch}.so" }]
+  - name: libapache2-mod-php8.2
+    binaries: [{ path: "*/libphp*.so",       name: "libphp_debian_{arch}.so" }]
+  - name: postgresql-16
+    binaries: [{ path: "*/bin/postgres",     name: "postgres_debian_{arch}" }]
+  - name: openjdk-17-jre-headless
+    binaries: [{ path: "*/server/libjvm.so", name: "libjvm_debian_{arch}.so" }]
+  - name: libvlccore9
+    binaries: [{ path: "libvlccore.so.*",    name: "libvlccore_debian_{arch}.so" }]
+  - name: libpoppler134
+    binaries: [{ path: "*/libpoppler.so.*",  name: "libpoppler_debian_{arch}.so" }]
+  - name: libwireshark17
+    binaries: [{ path: "*/libwireshark.so.*", name: "libwireshark_debian_{arch}.so" }]
+

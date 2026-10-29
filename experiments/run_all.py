@@ -13,6 +13,8 @@ with its own results/<stem>/ as the working directory.
     python experiments/run_all.py            # run every experiments/*.yaml
     python experiments/run_all.py win_rop     # run just experiments/win_rop.yaml
     python experiments/run_all.py win_rop libc_tfg_rop   # run a subset
+    python experiments/run_all.py --skip-compare         # skip the tool comparison
+    python experiments/run_all.py --no-compare           # (alias)
 
 run-experiments.py resolves path-valued config keys (`libraries`, `ropchains`,
 `rop3`) against the process's current working directory, not against the
@@ -76,21 +78,46 @@ def _resolve_config_paths(cfg):
 
 
 def main(argv=None):
-    argv = sys.argv[1:] if argv is None else argv
+    argv = list(sys.argv[1:] if argv is None else argv)
+
+    # --skip-compare / --no-compare drops the multi-tool comparison configs
+    # (driver: compare-tools), which are by far the most expensive to run.
+    skip_compare = False
+    positional = []
+    for arg in argv:
+        if arg in ("--skip-compare", "--no-compare"):
+            skip_compare = True
+        else:
+            positional.append(arg)
 
     configs = sorted(EXPERIMENTS_DIR.glob("*.yaml"))
     if not configs:
         print(f"ERROR: no *.yaml configs found in {EXPERIMENTS_DIR}", file=sys.stderr)
         return 1
 
-    if argv:
-        wanted = set(argv)
+    if positional:
+        wanted = set(positional)
         configs = [c for c in configs if c.stem in wanted]
         missing = wanted - {c.stem for c in configs}
         if missing:
             print(f"ERROR: unknown experiment(s): {', '.join(sorted(missing))}",
                   file=sys.stderr)
             return 1
+
+    if skip_compare:
+        kept = []
+        for config in configs:
+            with open(config) as f:
+                cfg = yaml.safe_load(f) or {}
+            if _is_compare_config(cfg):
+                print(f"[skip] {config.stem}: tool-comparison config "
+                      f"(--skip-compare)")
+            else:
+                kept.append(config)
+        configs = kept
+        if not configs:
+            print("No experiments left to run after --skip-compare.")
+            return 0
 
     failures = []
     for config in configs:

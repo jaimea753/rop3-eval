@@ -1,0 +1,64 @@
+# ---------------------------------------------------------------------------
+# run-experiments.py configuration — ROP-chain SEARCH benchmark.
+#
+# For each ROPLang chain file this records, per Debian binary, whether rop3 can
+# realize the chain and how long the search takes. It is the single-tool
+# standalone companion to compare_ropchains.yaml: its `depth` and `rop3_flags`
+# match that config so the rop3 rows here are directly comparable to the rop3
+# column of the cross-tool comparison.
+#
+#   python run-experiments.py --config experiments/ropchains_debian.yaml
+#   python experiments/run_all.py ropchains_debian      # -> results/ropchains_debian/
+#
+# Output: results/ropchains_debian/results_ropchains_rop.tsv (long format:
+# library, arch, chain, found, seconds, extract_seconds, status).
+# ---------------------------------------------------------------------------
+
+name: Debian multi-arch binaries — ROP-chain search benchmark
+
+# ropchains mode: run each chain file against every arch-matched binary.
+mode: ropchains
+
+# Corpus of target binaries. A chain is only run against binaries of its own
+# architecture (inferred from the chain filename, e.g. syscall_exec_amd64.txt).
+libraries: ./binaries/debian/binaries
+
+# Directory of ROPLang chain files to search for. These are rop3's own bundled
+# example chains (mprotect / syscall_exec / turing across architectures).
+ropchains: ./rop3/examples/ropchains
+
+# Run strictly sequentially: with the process pool several binaries share the
+# CPU and the reported `seconds` stop being a benchmark.
+sequential: true
+
+# Cap each chain search (seconds) via a SIGALRM timer in the worker. A hit is
+# recorded found: false, status: timeout (and is cached — it is reproducible and
+# the most expensive thing to repeat).
+chain_timeout: 1800
+
+# rop3 engine (the ./rop3 submodule; must contain rop3.py).
+rop3: ./rop3
+
+# Search depth in BYTES per architecture (null = the arch's own default). Fixed-
+# width ISAs (AArch64/RISC-V) need a wider window than x86. Kept identical to
+# compare_ropchains.yaml.
+depth:
+  default: null
+  x86:     10
+  x86_64:  10
+  aarch64: 50
+  riscv64: 50
+
+# Flags passed to the Rop3() constructor. Kept identical to compare_ropchains.yaml
+# (and the other multi-arch experiments) for a like-for-like rop3 baseline.
+rop3_flags:
+  ret_imm: false
+  reg_aliases: false
+  keep_contradictory: false
+  framed: true
+  all: false
+
+# Reuse this machine's previous measurements. The cache key covers the rop3
+# commit, config hash and chain-file contents. Override with --no-cache /
+# --refresh-cache; clear with `python utils/benchcache.py --clear`.
+cache: true

@@ -83,7 +83,8 @@ rop3_flags:
   allow_undeterministic: false
   allow_complex_mem:  false
 
-# Operations to probe (optional; omit to use the built-in lists).
+# Operations to probe (optional; omit to use the built-in lists). `pivot` (stack
+# pivot) is new in the rop3 multiarch release and available on every architecture.
 operations:
-  rop: [add, sub, neg, mov, lc, ld, st, xor, and, or, not, eqc, ltc, spa, sps, jmp, gsp]
-  jop: [add, sub, neg, mov, lc, ld, st, xor, and, or, not, eqc, ltc, spa, sps, gsp]
+  rop: [add, sub, neg, mov, lc, ld, st, xor, and, or, not, eqc, ltc, spa, sps, jmp, gsp, pivot]
+  jop: [add, sub, neg, mov, lc, ld, st, xor, and, or, not, eqc, ltc, spa, sps, gsp, pivot]

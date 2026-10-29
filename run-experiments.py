@@ -31,8 +31,10 @@ except ImportError as _import_exc:          # pragma: no cover - optional helper
     print(f"[WARN] utils/machine_specs.py or utils/benchcache.py unavailable "
           f"({_import_exc}): results will not be cached", file=sys.stderr)
 
-ROP_GADGETS = ['add', 'sub', 'neg', 'mov', 'lc', 'ld', 'st', 'xor', 'and', 'or', 'not', 'eqc', 'ltc', 'spa', 'sps', 'jmp', 'gsp']
-JOP_GADGETS = ['add', 'sub', 'neg', 'mov', 'lc', 'ld', 'st', 'xor', 'and', 'or', 'not', 'eqc', 'ltc', 'spa', 'sps', 'gsp']
+# 'pivot' (stack pivot) is new in the rop3 multiarch release and defined for
+# every architecture; unavailable ops are counted as 0, so it is safe to list.
+ROP_GADGETS = ['add', 'sub', 'neg', 'mov', 'lc', 'ld', 'st', 'xor', 'and', 'or', 'not', 'eqc', 'ltc', 'spa', 'sps', 'jmp', 'gsp', 'pivot']
+JOP_GADGETS = ['add', 'sub', 'neg', 'mov', 'lc', 'ld', 'st', 'xor', 'and', 'or', 'not', 'eqc', 'ltc', 'spa', 'sps', 'gsp', 'pivot']
 
 # --- Configurable scan parameters (overridable via a YAML config file) -------
 # Built-in defaults; __main__ replaces these from --config when given.

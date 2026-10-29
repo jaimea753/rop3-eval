@@ -87,9 +87,36 @@ class FetchError(Exception):
 # --------------------------------------------------------------------------- #
 # HTTP                                                                         #
 # --------------------------------------------------------------------------- #
+def _read_all(resp, *, progress: bool = False) -> bytes:
+    """Read a response body in chunks. `timeout` on the connection is a
+    *per-read* deadline, so a fully-stalled transfer still aborts (urllib raises
+    on the idle socket) instead of hanging forever. Reading in chunks (rather
+    than one `resp.read()`) also lets large downloads print progress so a
+    multi-hundred-MB bottle/cask doesn't look hung behind a silent prompt."""
+    total = resp.headers.get("Content-Length")
+    total = int(total) if total and total.isdigit() else 0
+    chunks, got, last_pct = [], 0, -1
+    big = progress and total > 32 * 1024 * 1024
+    while True:
+        chunk = resp.read(1 << 20)
+        if not chunk:
+            break
+        chunks.append(chunk)
+        got += len(chunk)
+        if big:
+            pct = got * 100 // total
+            if pct != last_pct and pct % 10 == 0:
+                print(f"           … {got >> 20}/{total >> 20} MiB ({pct}%)",
+                      file=sys.stderr)
+                last_pct = pct
+    return b"".join(chunks)
+
+
 def http_get(url: str, *, headers: dict | None = None,
-             retries: int = 3, timeout: int = 120) -> bytes:
-    """GET a URL into memory, retrying transient failures with backoff."""
+             retries: int = 3, timeout: int = 120, progress: bool = False) -> bytes:
+    """GET a URL into memory, retrying transient failures with backoff. A
+    per-read socket `timeout` bounds a stalled connection so the fetch can't
+    hang indefinitely; `progress` prints a size readout for large transfers."""
     last = None
     hdrs = {"User-Agent": USER_AGENT}
     if headers:
@@ -98,7 +125,7 @@ def http_get(url: str, *, headers: dict | None = None,
         try:
             req = Request(url, headers=hdrs)
             with urlopen(req, timeout=timeout) as resp:
-                return resp.read()
+                return _read_all(resp, progress=progress)
         except HTTPError as exc:
             if exc.code == 404:
                 raise FetchError(f"404 Not Found: {url}") from exc
@@ -139,12 +166,13 @@ def ghcr_token_for(url: str) -> str | None:
         return None
 
 
-def ghcr_get(url: str, accept: str, *, timeout: int = 120) -> bytes:
+def ghcr_get(url: str, accept: str, *, timeout: int = 120,
+             progress: bool = False) -> bytes:
     """GET a ghcr.io URL authenticating like Homebrew does: try the hard-coded
     anonymous QQ== token, and on a 401 mint a repo-scoped token and retry."""
     headers = {"Authorization": f"Bearer {GHCR_ANON_TOKEN}", "Accept": accept}
     try:
-        return http_get(url, headers=headers, timeout=timeout)
+        return http_get(url, headers=headers, timeout=timeout, progress=progress)
     except HTTPError as exc:
         if exc.code != 401:
             raise FetchError(f"ghcr GET failed ({exc.code}): {url}") from exc
@@ -152,12 +180,13 @@ def ghcr_get(url: str, accept: str, *, timeout: int = 120) -> bytes:
         if not token:
             raise FetchError(f"ghcr rejected the anonymous token for {url}") from exc
         headers["Authorization"] = f"Bearer {token}"
-        return http_get(url, headers=headers, timeout=timeout)
+        return http_get(url, headers=headers, timeout=timeout, progress=progress)
 
 
 def download_bottle(url: str) -> bytes:
     """Download a bottle blob from ghcr.io, authenticating like Homebrew does."""
-    return ghcr_get(url, "application/vnd.oci.image.layer.v1.tar+gzip", timeout=300)
+    return ghcr_get(url, "application/vnd.oci.image.layer.v1.tar+gzip",
+                    timeout=300, progress=True)
 
 
 # --------------------------------------------------------------------------- #
@@ -242,16 +271,10 @@ def ghcr_manifest_index(repo: str, version: str) -> dict | None:
     return idx
 
 
-def resolve_bottle(formula: str, tags: list[str],
-                   pinned: str | None = None) -> tuple[str, str, str, str]:
-    """Return (version, bottle_tag, blob_url, sha256) for the newest version of
-    `formula` that has a bottle for one of `tags` (an arch's ordered release
-    preference; `all` — a portable/noarch bottle — is always tried last),
-    resolved from ghcr.io's OCI manifests. A `pinned` version is used directly
-    instead of scanning. The bottle's sha256 is its ghcr content digest."""
-    repo = _ghcr_repo(formula)
-    versions = [str(pinned)] if pinned else ghcr_list_versions(repo)
-    wanted = list(tags) + ["all"]
+def _scan_versions(repo: str, versions: list[str], wanted: list[str],
+                   limit: int | None) -> tuple[str, str, str, str] | None:
+    """First version in `versions` that has a bottle for one of `wanted`
+    (in `wanted` order), or None. Stops after `limit` versions if set."""
     scanned = 0
     for version in versions:
         idx = ghcr_manifest_index(repo, version)
@@ -278,12 +301,40 @@ def resolve_bottle(formula: str, tags: list[str],
                 url = f"{GHCR_V2}/{repo}/blobs/sha256:{digest}"
                 return version, tag, url, digest
         scanned += 1
-        if not pinned and scanned >= MAX_VERSION_SCAN:
+        if limit and scanned >= limit:
             break
+    return None
+
+
+def resolve_bottle(formula: str, tags: list[str],
+                   pinned: str | None = None) -> tuple[str, str, str, str]:
+    """Return (version, bottle_tag, blob_url, sha256) for a bottle of `formula`
+    matching one of `tags` (an arch's ordered release preference; `all` — a
+    portable/noarch bottle — is always tried last), resolved from ghcr.io's OCI
+    manifests. A `pinned` version is preferred, but if that exact version has no
+    bottle for any wanted tag the search falls back to scanning every version
+    newest-first for the newest one that does — so an arch whose pinned release
+    was never built (e.g. a tahoe-pinned formula that only has older macOS Intel
+    bottles) still resolves instead of hard-failing. The bottle's sha256 is its
+    ghcr content digest."""
+    repo = _ghcr_repo(formula)
+    wanted = list(tags) + ["all"]
     if pinned:
-        raise FetchError(f"{formula}: version {pinned} has no bottle for {tags}")
-    raise FetchError(f"{formula}: no bottle for {tags} "
-                     f"(scanned {scanned} version(s) on ghcr)")
+        got = _scan_versions(repo, [str(pinned)], wanted, None)
+        if got:
+            return got
+        # Pinned version has no bottle for these tags (common for amd64, whose
+        # macOS Intel bottles lag the arm64 pin): fall back to the newest version
+        # that does have one.
+        got = _scan_versions(repo, ghcr_list_versions(repo), wanted, MAX_VERSION_SCAN)
+        if got:
+            return got
+        raise FetchError(f"{formula}: no bottle for {tags} "
+                         f"(pin {pinned} and newest-first scan both empty)")
+    got = _scan_versions(repo, ghcr_list_versions(repo), wanted, MAX_VERSION_SCAN)
+    if got:
+        return got
+    raise FetchError(f"{formula}: no bottle for {tags} (scanned ghcr newest-first)")
 
 
 # --------------------------------------------------------------------------- #
@@ -465,10 +516,16 @@ def _macho_from_tree(root: str, exe_override: str | None,
 
 def _run_7z(archive: str, dest: str) -> None:
     """Fully extract `archive` into `dest` with 7-Zip — every member, no include
-    filter, so it works no matter how deep the app bundle is nested."""
+    filter, so it works no matter how deep the app bundle is nested. Bounded by a
+    timeout so a 7-Zip process that stalls on a malformed image can't hang the
+    whole run; a timeout just yields no members, handled as 'no .app found'."""
     os.makedirs(dest, exist_ok=True)
-    subprocess.run([_SEVENZIP, "x", "-y", f"-o{dest}", archive],
-                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    try:
+        subprocess.run([_SEVENZIP, "x", "-y", f"-o{dest}", archive],
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                       timeout=600)
+    except subprocess.TimeoutExpired:
+        pass
 
 
 def _tree_has_app(root: str) -> bool:
@@ -561,7 +618,10 @@ def render_name(template: str, *, formula: str, arch: str, basename: str) -> str
 # driver                                                                       #
 # --------------------------------------------------------------------------- #
 DEFAULT_PLATFORMS = {
-    "amd64": ["tahoe", "sequoia", "sonoma", "ventura"],
+    # amd64 (macOS Intel) bottles lag far behind arm64 — newest releases are
+    # often arm64-only — so prefer the latest release but fall back through
+    # older ones to the last with broad Intel coverage (sonoma).
+    "amd64": ["tahoe", "sequoia", "sonoma", "ventura", "monterey"],
     "aarch64": ["arm64_golden_gate", "arm64_tahoe", "arm64_sequoia", "arm64_sonoma"],
 }
 
@@ -652,9 +712,11 @@ def main() -> int:
                 pinned = entry.get("version")
                 version, used_tag, url, want_sha = resolve_bottle(
                     formula, tags, pinned=pinned)
+                note = (f"  (pin {pinned} had no {arch} bottle)"
+                        if pinned and version != str(pinned) else "")
 
                 if args.dry_run:
-                    print(f"[{tag_label}] {version} @ {used_tag}\n         {url}")
+                    print(f"[{tag_label}] {version} @ {used_tag}{note}\n         {url}")
                     n_ok += 1
                     continue
 
@@ -740,7 +802,7 @@ def main() -> int:
                 if url in dl_cache:
                     exe_name, macho = dl_cache[url]
                 else:
-                    blob = http_get(url, timeout=600)
+                    blob = http_get(url, timeout=600, progress=True)
                     if want_sha and len(want_sha) == 64 and all(
                             c in "0123456789abcdef" for c in want_sha):
                         got = hashlib.sha256(blob).hexdigest()

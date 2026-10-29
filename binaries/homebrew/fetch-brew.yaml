@@ -36,7 +36,14 @@ naming: "{name}_brew_{arch}"
 # A single release tag — no fallback list — keeps resolution deterministic.
 # Casks are universal vendor downloads sliced per arch, independent of this.
 platforms:
-  amd64:   [tahoe]
+  # aarch64 is pinned to a single release (Tahoe) — it has nearly every formula.
+  # amd64 (macOS Intel) bottles lag: the newest releases are largely arm64-only,
+  # so amd64 prefers Tahoe (matching aarch64 for the dual-arch formulae that
+  # still ship Intel there) but falls back through older releases to Sonoma, the
+  # last macOS with broad Intel coverage. Combined with the version-pin fallback
+  # in resolve_bottle, this means every formula resolves an Intel bottle (from an
+  # older version/release when its Tahoe pin is arm64-only) instead of FAILED.
+  amd64:   [tahoe, sequoia, sonoma, ventura]
   aarch64: [arm64_tahoe]
 
 # Formulae to pull from. Each entry is a Homebrew `name:` and the `binaries:`
@@ -215,20 +222,21 @@ formulae:
 # these are usually universal binaries, sliced per arch -> <token>_cask_<arch>_bin.
 # .zip casks need only the stdlib; .dmg/.pkg casks need a 7z/7zz (p7zip) on PATH
 # (shell.nix provides it). An optional `executable:` overrides the Info.plist name.
+# NOTE: firefox, google-chrome and gimp were dropped — their .dmg wraps an APFS
+# volume that neither p7zip nor 7zz can extract on Linux (7-Zip has no APFS
+# support), so they always failed with "no .app bundle found". Every cask below
+# ships either a .zip or an older HFS+ .dmg that 7-Zip can read.
 casks:
   - name: iterm2                # .zip
   - name: visual-studio-code    # .zip (served without a .zip extension)
-  - name: firefox               # .dmg
-  - name: google-chrome         # .dmg
-  - name: vlc                   # .dmg
-  - name: gimp                  # .dmg
-  - name: keepassxc             # .dmg
-  - name: rectangle             # .dmg
-  - name: slack                 # .dmg
-  - name: spotify               # .dmg
-  - name: discord               # .dmg
-  - name: signal                # .dmg
-  - name: obs                   # .dmg
-  - name: blender               # .dmg
-  - name: inkscape              # .dmg
-  - name: sublime-text          # .dmg
+  - name: vlc                   # .dmg (HFS+)
+  - name: keepassxc             # .dmg (HFS+)
+  - name: rectangle             # .dmg (HFS+)
+  - name: slack                 # .dmg (HFS+)
+  - name: spotify               # .dmg (HFS+)
+  - name: discord               # .dmg (HFS+)
+  - name: signal                # .zip
+  - name: obs                   # .dmg (HFS+)
+  - name: blender               # .dmg (HFS+)
+  - name: inkscape              # .dmg (HFS+)
+  - name: sublime-text          # .zip

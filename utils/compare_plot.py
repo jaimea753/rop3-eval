@@ -54,7 +54,6 @@ TOOL_COLORS = {
     "angrop":   "#1baf7a",
     "ropium":   "#eda100",
     "pwntools": "#e87ba4",
-    "rop4":     "#7b52d6",
 }
 OTHER_TOOL_COLOR = "#898781"
 # Tools whose gadget loading dwarfs the search itself: the size charts draw a

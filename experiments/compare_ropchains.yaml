@@ -8,7 +8,7 @@
 # auto-appear on the site built by utils/build_site.py.
 # ---------------------------------------------------------------------------
 
-name: rop3 vs ropper vs angrop vs ropium vs pwntools vs rop4 — ROP-chain construction
+name: rop3 vs ropper vs angrop vs ropium vs pwntools — ROP-chain construction
 
 # Consumed by compare-tools.py (NOT run-experiments.py). experiments/run_all.py
 # reads this key and dispatches to the right driver.
@@ -33,16 +33,8 @@ ropchains: ./ropchains
 # it has no recipe for aarch64/riscv. ropper and ropium cover x86/x86_64 only;
 # pwntools covers x86/x86_64/aarch64. A (tool, chain) pair with no recipe file is
 # reported status=unsupported, so the matrix stays complete.
-#
-# rop4 is a Go port of rop3 (github.com/jaimea753/rop4). It has no pip package,
-# so a pinned prebuilt release is downloaded into a gitignored .rop4/ by
-# utils/fetch_rop4.sh (shell.nix runs it on shell entry); utils/rop4_worker.py
-# imports it from there.
-# It reuses rop3's ROPLang, so it covers every chain rop3 does (all four arches)
-# and is driven straight from ropchains/rop3/. If it is not built, its rows come
-# back status=error.
-#tools: [rop3, ropper, angrop, ropium, pwntools, rop4]
-tools: [rop3, ropper, pwntools, angrop, rop4]
+#tools: [rop3, ropper, angrop, ropium, pwntools]
+tools: [rop3, ropper, pwntools, angrop]
 
 # Gadget loading and chain construction are timed and bounded SEPARATELY, so a
 # slow full-libc load can't eat the construction budget. `load_timeout` bounds

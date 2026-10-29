@@ -70,20 +70,6 @@ pkgs.mkShell {
     # fi
     # export PYTHONPATH="$PWD/.ropium/bin''${PYTHONPATH:+:$PYTHONPATH}"
 
-    # rop4 (a Go port of rop3) has no pip package either, but it ships prebuilt
-    # release binaries, so instead of building it we download the pinned release
-    # (c-shared library + Python wrapper) into gitignored .rop4/ and put the
-    # wrapper on PYTHONPATH so the comparison worker can `import rop4`. The release
-    # .so bundles capstone, so there is no libcapstone/Go dependency. The fetch is
-    # idempotent (skips when already present) and non-fatal — on failure,
-    # compare-tools.py reports rop4 rows as 'error'. Comment this out to fetch rop4
-    # by hand instead (bash utils/fetch_rop4.sh), or set ROP4_REF to pin a tag.
-    if [ -f utils/fetch_rop4.sh ]; then
-      bash utils/fetch_rop4.sh || \
-        echo "[WARN] rop4 fetch failed; rop4 comparison rows will be 'error'"
-    fi
-    export PYTHONPATH="$PWD/.rop4/python''${PYTHONPATH:+:$PYTHONPATH}"
-
     echo "Python $(python --version | cut -d' ' -f2) venv active: $VIRTUAL_ENV"
   '';
 }

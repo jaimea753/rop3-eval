@@ -491,7 +491,7 @@ def _make_cache(items_to_test, mode):
     return CACHE
 
 
-def _write_run_meta(mode, out_file, elapsed, total_libs, path="run-meta.yaml"):
+def _write_run_meta(mode, out_file, elapsed, libs, path="run-meta.yaml"):
     """Record which machine and which rop3 produced out_file, next to it.
 
     Written into the current directory, which experiments/run_all.py sets to
@@ -512,7 +512,13 @@ def _write_run_meta(mode, out_file, elapsed, total_libs, path="run-meta.yaml"):
         'config_hash':     benchcache.config_hash(CONFIG, mode) if benchcache else None,
         'rop3_commit':     ROP3_COMMIT,
         'elapsed_seconds': round(elapsed, 2),
-        'libraries':       total_libs,
+        'libraries':       len(libs),
+        # On-disk size of every analysed target (a bundle is the sum of its
+        # files). The corpus is gitignored, so this is the only place the
+        # size-vs-gadget-count charts (utils/size_plot.py, rendered by
+        # utils/build_site.py) can read it from.
+        'library_bytes':   {lib['name']: sum(os.path.getsize(f) for f in lib['files'])
+                            for lib in libs},
         'reused_from_cache': CACHE.hits if CACHE is not None else 0,
         'workers':         1 if SEQUENTIAL else WORKERS,
         'sequential':      bool(SEQUENTIAL),
@@ -742,7 +748,7 @@ def main(lib_folder):
 
     print(f"\nSaved to {out_file!r}")
     print(f"Completed in {time.time() - t1:.2f} seconds")
-    _write_run_meta('ops', out_file, time.time() - t1, len(libs))
+    _write_run_meta('ops', out_file, time.time() - t1, libs)
 
 
 def main_presence(lib_folder):
@@ -786,7 +792,7 @@ def main_presence(lib_folder):
     print(df.to_string())
     print(f"\nSaved to {out_file!r}")
     print(f"Completed in {time.time() - t1:.2f} seconds")
-    _write_run_meta('presence', out_file, time.time() - t1, len(libs))
+    _write_run_meta('presence', out_file, time.time() - t1, libs)
 
 
 def main_ropchains(lib_folder, ropchains_folder):
@@ -824,7 +830,7 @@ def main_ropchains(lib_folder, ropchains_folder):
         print(df.sort_values(['library', 'chain']).to_string(index=False))
     print(f"\nSaved to {out_file!r}")
     print(f"Completed in {time.time() - t1:.2f} seconds")
-    _write_run_meta('ropchains', out_file, time.time() - t1, len(libs))
+    _write_run_meta('ropchains', out_file, time.time() - t1, libs)
 
 
 if __name__ == "__main__":

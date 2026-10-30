@@ -10,6 +10,19 @@ libraries: 15
 reused_from_cache: 0
 workers: 4
 sequential: false
+library_bytes:
+  busybox_aarch64_bin: 1980952
+  busybox_amd64_bin: 2038952
+  busybox_riscv64_bin: 1620072
+  busybox_x86_bin: 2128640
+  gnu_coreutils_aarch64: 9443144
+  gnu_coreutils_amd64: 6843384
+  gnu_coreutils_riscv64: 5710144
+  gnu_coreutils_x86: 7148288
+  uutils_coreutils_aarch64_bin: 11383176
+  uutils_coreutils_amd64_bin: 14029824
+  uutils_coreutils_riscv64_bin: 11289016
+  uutils_coreutils_x86_bin: 12835512
 machine:
   label: null
   collected: '2026-09-30'

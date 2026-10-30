@@ -10,6 +10,58 @@ libraries: 51
 reused_from_cache: 0
 workers: 4
 sequential: false
+library_bytes:
+  advapi32_aarch64.dll: 1338328
+  advapi32_amd64.dll: 778408
+  advapi32_x86.dll: 538376
+  combase_aarch64.dll: 6891304
+  combase_amd64.dll: 3732784
+  combase_x86.dll: 2714880
+  gdi32_aarch64.dll: 399920
+  gdi32_amd64.dll: 220584
+  gdi32_x86.dll: 161856
+  gdi32full_aarch64.dll: 1974112
+  gdi32full_amd64.dll: 1203960
+  gdi32full_x86.dll: 951544
+  kernel32_aarch64.dll: 1459312
+  kernel32_amd64.dll: 844504
+  kernel32_x86.dll: 695760
+  msvcrt_aarch64.dll: 1324392
+  msvcrt_amd64.dll: 699880
+  msvcrt_x86.dll: 812104
+  ntdll_aarch64.dll: 4343600
+  ntdll_amd64.dll: 2501448
+  ntdll_x86.dll: 1827112
+  ole32_aarch64.dll: 2783616
+  ole32_amd64.dll: 1708064
+  ole32_x86.dll: 1409168
+  oleaut32_aarch64.dll: 1714928
+  oleaut32_amd64.dll: 902360
+  oleaut32_x86.dll: 649432
+  rpcrt4_aarch64.dll: 2102856
+  rpcrt4_amd64.dll: 1170968
+  rpcrt4_x86.dll: 890592
+  sechost_aarch64.dll: 1169488
+  sechost_amd64.dll: 699920
+  sechost_x86.dll: 536352
+  shell32_aarch64.dll: 15180048
+  shell32_amd64.dll: 7984648
+  shell32_x86.dll: 6701808
+  shlwapi_aarch64.dll: 748552
+  shlwapi_amd64.dll: 431320
+  shlwapi_x86.dll: 333312
+  ucrtbase_aarch64.dll: 2262352
+  ucrtbase_amd64.dll: 1381656
+  ucrtbase_x86.dll: 1128768
+  user32_aarch64.dll: 2584656
+  user32_amd64.dll: 1889872
+  user32_x86.dll: 1940664
+  win32u_aarch64.dll: 382392
+  win32u_amd64.dll: 171024
+  win32u_x86.dll: 107616
+  ws2_32_aarch64.dll: 782696
+  ws2_32_amd64.dll: 542904
+  ws2_32_x86.dll: 427896
 machine:
   label: null
   collected: '2026-09-30'

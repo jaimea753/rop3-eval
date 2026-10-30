@@ -10,6 +10,38 @@ libraries: 31
 reused_from_cache: 0
 workers: 4
 sequential: false
+library_bytes:
+  archlinux_amd64_libc.so: 2145632
+  debian_aarch64_libc.so: 1782152
+  debian_amd64_libc.so: 2003408
+  debian_i386_libc.so: 2315004
+  debian_riscv64_libc.so: 1421472
+  fedora43_aarch64_libc.so: 2304456
+  fedora43_amd64_libc.so: 2459528
+  fedora43_i386_libc.so: 2460524
+  freebsd_aarch64_libc.so: 1858648
+  freebsd_amd64_libc.so: 1957616
+  freebsd_i386_libc.so: 1778444
+  freebsd_riscv64_libc.so: 1593056
+  macos_aarch64_libc: 1931840
+  macos_amd64_libc: 8933376
+  netbsd_amd64_libc.so: 2241952
+  netbsd_i386_libc.so: 2164332
+  openbsd_aarch64_libc.so: 4701576
+  openbsd_amd64_libc.so: 4057176
+  openbsd_i386_libc.so: 3296052
+  openbsd_riscv64_libc.so: 4357480
+  slackware_amd64_libc.so: 2168056
+  slackware_i386_libc.so: 2065712
+  ubuntu_aarch64_libc.so: 1722920
+  ubuntu_amd64_libc.so: 2125328
+  ubuntu_i386_libc.so: 2313128
+  ubuntu_riscv64_libc.so: 1534120
+  void_glibc_aarch64_libc.so: 10864456
+  void_glibc_amd64_libc.so: 12699128
+  void_glibc_i386_libc.so: 13015676
+  void_musl_amd64_libc.so: 739952
+  void_musl_i386_libc.so: 767764
 machine:
   label: null
   collected: '2026-09-30'

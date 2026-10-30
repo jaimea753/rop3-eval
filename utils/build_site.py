@@ -5,7 +5,10 @@ Build a static site out of results/<experiment>/*.tsv for GitHub Pages.
 For every result TSV under --results-dir, renders a heatmap PNG (reusing
 load_matrix()/make_heatmap() from utils/heatmap.py) and copies the raw TSV,
 then emits a single index.html grouping them by experiment (the results/
-subdirectory name). The page opens with the benchmark machine (machine.yaml),
+subdirectory name). A count matrix whose run-meta.yaml records the binaries'
+sizes (`library_bytes`) additionally gets utils/size_plot.py's curves: the
+all-operations aggregate, then one gadgets-vs-size figure per operation in a
+scroll-snap slideshow (arrows, keyboard, swipe, and a chip per operation). The page opens with the benchmark machine (machine.yaml),
 and an experiment that recorded its own provenance (results/<experiment>/
 run-meta.yaml, written by run-experiments.py) gets a note under its heading --
 including its own machine block when it ran somewhere other than machine.yaml. A TSV that doesn't fit the heatmap model (e.g. ropchains
@@ -33,6 +36,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from heatmap import load_matrix, make_heatmap  # noqa: E402
 import compare_plot  # noqa: E402
 import machine_specs  # noqa: E402
+import size_plot  # noqa: E402
 
 PAGE_TEMPLATE = """<!doctype html>
 <html lang="en">
@@ -100,6 +104,56 @@ PAGE_TEMPLATE = """<!doctype html>
                     margin: 0.9rem 0 0; }}
   .provenance {{ color: #888; font-size: 0.82rem; margin: 0.4rem 0 1rem;
                  font-family: ui-monospace, monospace; }}
+  .figure-label {{ margin: 1.4rem 0 0.4rem; font-size: 0.72rem;
+                   text-transform: uppercase; letter-spacing: 0.08em;
+                   color: #888; font-weight: 600; }}
+  .figure-label:first-child {{ margin-top: 0; }}
+  /* Slideshow: a horizontally scroll-snapped track of one figure per
+     operation. Scrolling/swiping works with no script at all; the script
+     only adds the arrows, the chips and the keyboard. */
+  .slides {{ border: 1px solid #8883; border-radius: 8px; padding: 0.6rem 0.8rem;
+             outline-offset: 2px; }}
+  .slides:focus-visible {{ outline: 2px solid #2a78d6; }}
+  .slides-head {{ display: flex; justify-content: space-between;
+                  align-items: baseline; gap: 1rem; font-size: 0.85rem; }}
+  .slides-head .slides-pos {{ color: #888; font-variant-numeric: tabular-nums;
+                              font-family: ui-monospace, monospace; }}
+  .slides-nav {{ display: flex; flex-wrap: wrap; gap: 0.3rem; margin: 0.5rem 0; }}
+  .chip {{ font: inherit; font-size: 0.78rem; font-family: ui-monospace, monospace;
+           padding: 0.1rem 0.55rem; border-radius: 999px; cursor: pointer;
+           border: 1px solid #8885; background: transparent; color: inherit;
+           line-height: 1.5; }}
+  .chip:hover {{ background: #8882; }}
+  .chip[aria-selected="true"] {{ background: #2a78d6; border-color: #2a78d6;
+                                 color: #fff; }}
+  .slides-stage {{ position: relative; }}
+  .slides-track {{ display: flex; overflow-x: auto; scroll-snap-type: x mandatory;
+                   scroll-behavior: smooth; scrollbar-width: none;
+                   overscroll-behavior-x: contain; border-radius: 4px; }}
+  .slides-track::-webkit-scrollbar {{ display: none; }}
+  .slide {{ flex: 0 0 100%; scroll-snap-align: start; scroll-snap-stop: always;
+            margin: 0; text-align: center; }}
+  .slide img {{ display: block; width: 100%; height: auto; }}
+  .slide figcaption {{ font-size: 0.8rem; color: #888; margin-top: 0.3rem;
+                       font-family: ui-monospace, monospace; }}
+  .slides-arrow {{ position: absolute; top: 50%; transform: translateY(-50%);
+                   z-index: 1; width: 2.2rem; height: 2.2rem; border-radius: 50%;
+                   border: 1px solid #8885; background: #fffd; color: #333;
+                   font-size: 1.4rem; line-height: 1; cursor: pointer;
+                   display: flex; align-items: center; justify-content: center;
+                   box-shadow: 0 1px 4px #0003; transition: opacity 0.15s; }}
+  .slides-arrow:hover {{ background: #fff; }}
+  .slides-arrow.prev {{ left: 0.4rem; }}
+  .slides-arrow.next {{ right: 0.4rem; }}
+  .slides-arrow[disabled] {{ opacity: 0.25; cursor: default; }}
+  .slides-dots {{ display: flex; justify-content: center; gap: 0.35rem;
+                  margin-top: 0.5rem; }}
+  .slides-dots span {{ width: 0.45rem; height: 0.45rem; border-radius: 50%;
+                       background: #8886; transition: transform 0.15s; }}
+  .slides-dots span.is-active {{ background: #2a78d6; transform: scale(1.4); }}
+  @media (prefers-reduced-motion: reduce) {{
+    .slides-track {{ scroll-behavior: auto; }}
+  }}
 </style>
 </head>
 <body>
@@ -127,6 +181,58 @@ document.addEventListener('click', function (e) {
   else detail.setAttribute('hidden', '');
   btn.setAttribute('aria-expanded', opening ? 'true' : 'false');
   btn.textContent = opening ? '\\u25bc' : '\\u25b6';
+});
+
+// Slideshows (.slides): the track is a native scroll-snap container, so a
+// swipe or trackpad scroll already works; this wires the arrows, the chips,
+// the dots, the position counter and the keyboard to it, and keeps them in
+// sync with whatever slide is actually in view (IntersectionObserver).
+document.querySelectorAll('[data-slides]').forEach(function (root) {
+  var track = root.querySelector('.slides-track');
+  var slides = Array.prototype.slice.call(track.children);
+  var chips = Array.prototype.slice.call(root.querySelectorAll('[data-slide-to]'));
+  var dots = Array.prototype.slice.call(root.querySelectorAll('.slides-dots span'));
+  var pos = root.querySelector('[data-slides-index]');
+  var prev = root.querySelector('[data-slide-step="-1"]');
+  var next = root.querySelector('[data-slide-step="1"]');
+  var current = 0;
+  var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function mark(i) {
+    current = i;
+    chips.forEach(function (c, k) { c.setAttribute('aria-selected', k === i ? 'true' : 'false'); });
+    dots.forEach(function (d, k) { d.classList.toggle('is-active', k === i); });
+    if (pos) pos.textContent = String(i + 1);
+    if (prev) prev.disabled = (i === 0);
+    if (next) next.disabled = (i === slides.length - 1);
+  }
+  function go(i) {
+    i = Math.max(0, Math.min(slides.length - 1, i));
+    track.scrollTo({ left: slides[i].offsetLeft - track.offsetLeft,
+                     behavior: reduced ? 'auto' : 'smooth' });
+    mark(i);
+  }
+  chips.forEach(function (c) {
+    c.addEventListener('click', function () { go(parseInt(c.dataset.slideTo, 10)); });
+  });
+  if (prev) prev.addEventListener('click', function () { go(current - 1); });
+  if (next) next.addEventListener('click', function () { go(current + 1); });
+  root.addEventListener('keydown', function (e) {
+    if (e.target.closest('input, select, textarea')) return;
+    if (e.key === 'ArrowLeft') { go(current - 1); e.preventDefault(); }
+    else if (e.key === 'ArrowRight') { go(current + 1); e.preventDefault(); }
+    else if (e.key === 'Home') { go(0); e.preventDefault(); }
+    else if (e.key === 'End') { go(slides.length - 1); e.preventDefault(); }
+  });
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) mark(slides.indexOf(en.target));
+      });
+    }, { root: track, threshold: 0.6 });
+    slides.forEach(function (s) { io.observe(s); });
+  }
+  mark(0);
 });
 </script>"""
 
@@ -362,6 +468,88 @@ def _compare_charts_html(tsv, img_dir, exp_name):
     return "\n".join(imgs)
 
 
+SLIDES_TEMPLATE = """<div class="slides" data-slides tabindex="0" role="region"
+     aria-roledescription="carousel" aria-label="{label}">
+<div class="slides-head"><span>{label}</span>
+<span class="slides-pos"><span data-slides-index>1</span> / {count}</span></div>
+<div class="slides-nav" role="tablist" aria-label="Operation">{chips}</div>
+<div class="slides-stage">
+<button type="button" class="slides-arrow prev" data-slide-step="-1"
+        aria-label="Previous operation">&#8249;</button>
+<div class="slides-track">
+{slides}
+</div>
+<button type="button" class="slides-arrow next" data-slide-step="1"
+        aria-label="Next operation">&#8250;</button>
+</div>
+<div class="slides-dots" aria-hidden="true">{dots}</div>
+</div>
+"""
+
+
+def _save_png(fig, path):
+    fig.savefig(path, dpi=150, transparent=False, facecolor="white",
+                bbox_inches="tight", pad_inches=0.1)
+    plt.close(fig)
+
+
+def _size_charts_html(tsv, img_dir, exp_name):
+    """Binary-size curves for a count-matrix TSV, saved under *img_dir*: the
+    all-operations aggregate as one figure, then a slideshow with one
+    gadgets-vs-size figure per operation (utils/size_plot.py). Needs the
+    binaries' sizes from `library_bytes` in the run-meta.yaml beside the TSV;
+    without them (or if plotting fails) a short note is returned instead, so
+    the heatmap card above is unaffected."""
+    try:
+        counts, arch = size_plot.load_counts(str(tsv))
+        sizes = size_plot.load_sizes(str(tsv))
+        known = [n for n in counts.index if n in sizes]
+        if not known:
+            return ('<p class="no-preview">No size curves: run-meta.yaml records no '
+                    'library_bytes for these binaries.</p>')
+        missing = len(counts) - len(known)
+        note = (f'<p class="no-preview">{missing} of {len(counts)} binaries have no '
+                'recorded size and are left out of the curves.</p>' if missing else "")
+
+        parts = []
+        try:
+            fig = size_plot.make_aggregate_chart(counts, arch, sizes)
+            name = f"{tsv.stem}_size_aggregate.png"
+            _save_png(fig, img_dir / name)
+            parts.append('<p class="figure-label">All operations vs. binary size</p>'
+                         f'<img src="img/{exp_name}/{html.escape(name)}" '
+                         'alt="relative gadget abundance (median over operations, '
+                         'outliers attenuated) vs. binary size">')
+        except ValueError as exc:
+            print(f"  [WARN] aggregate size chart for {tsv}: {exc}", file=sys.stderr)
+
+        slides, chips, dots = [], [], []
+        for i, op in enumerate(counts.columns):
+            fig = size_plot.make_op_chart(counts, arch, sizes, op)
+            name = f"{tsv.stem}_size_{op}.png"
+            _save_png(fig, img_dir / name)
+            op_html = html.escape(str(op))
+            slides.append(f'<figure class="slide" data-op="{op_html}">'
+                          f'<img src="img/{exp_name}/{html.escape(name)}" '
+                          f'loading="{"eager" if i == 0 else "lazy"}" '
+                          f'alt="{op_html} gadgets found vs. binary size">'
+                          f'<figcaption>{op_html}</figcaption></figure>')
+            chips.append(f'<button type="button" class="chip" role="tab" '
+                         f'data-slide-to="{i}" aria-selected="{"true" if i == 0 else "false"}">'
+                         f'{op_html}</button>')
+            dots.append(f'<span class="{"is-active" if i == 0 else ""}"></span>')
+        if slides:
+            parts.append('<p class="figure-label">Per operation vs. binary size</p>'
+                         + SLIDES_TEMPLATE.format(
+                             label="Gadgets found vs. binary size, per operation",
+                             count=len(slides), chips="".join(chips),
+                             slides="\n".join(slides), dots="".join(dots)))
+        return note + "\n".join(parts)
+    except Exception as exc:
+        print(f"  [WARN] could not draw size curves for {tsv}: {exc}", file=sys.stderr)
+        return ""
+
+
 def render_experiment(exp_dir, out_dir, exp_name):
     img_dir = out_dir / "img" / exp_name
     data_dir = out_dir / "data" / exp_name
@@ -404,7 +592,9 @@ def render_experiment(exp_dir, out_dir, exp_name):
             fig.savefig(png_path, dpi=150, transparent=False, facecolor="white",
                         bbox_inches="tight", pad_inches=0.05)
             plt.close(fig)
-            body = f'<img src="img/{exp_name}/{stem}.png" alt="{html.escape(stem)} heatmap">'
+            body = ('<p class="figure-label">Heatmap</p>'
+                    f'<img src="img/{exp_name}/{stem}.png" alt="{html.escape(stem)} heatmap">'
+                    + _size_charts_html(tsv, img_dir, exp_name))
         except Exception as exc:
             print(f"  [WARN] could not render {tsv}: {exc}", file=sys.stderr)
             body = f'<p class="no-preview">No preview available ({html.escape(str(exc))}).</p>'

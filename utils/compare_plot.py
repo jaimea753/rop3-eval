@@ -40,6 +40,7 @@ from heatmap import (  # noqa: E402
     ARCH_CANON, DEFAULT_RESULTS_DIR, _pretty_arch, _resolve_input,
     activate_gui_backend,
 )
+from size_plot import _fmt_bytes, load_sizes  # noqa: E402,F401  (sizes from run-meta.yaml)
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEFAULT_ROPCHAINS_DIR = os.path.join(REPO_ROOT, "ropchains", "rop3")
@@ -244,38 +245,6 @@ def make_compare_chart(df_arch, *, title=None):
                bbox_to_anchor=(0.5, -0.03), columnspacing=1.4, handletextpad=0.5)
     fig.tight_layout(rect=(0, 0.14, 1, 1))
     return fig
-
-
-def load_sizes(tsv, binaries_dir=None):
-    """{library: bytes}. Read from `library_bytes` in the run-meta.yaml beside
-    the TSV (compare-tools.py records it; the corpus itself is gitignored), then
-    filled in from files under *binaries_dir* for anything missing there."""
-    sizes = {}
-    meta = os.path.join(os.path.dirname(os.path.abspath(tsv)), "run-meta.yaml")
-    if os.path.isfile(meta):
-        import yaml
-        with open(meta, encoding="utf-8") as f:
-            sizes.update((yaml.safe_load(f) or {}).get("library_bytes") or {})
-    if binaries_dir and os.path.isdir(binaries_dir):
-        for name in os.listdir(binaries_dir):
-            path = os.path.join(binaries_dir, name)
-            if name in sizes:
-                continue
-            if os.path.isfile(path):
-                sizes[name] = os.path.getsize(path)
-            elif os.path.isdir(path):       # a bundle: all its files, one target
-                sizes[name] = sum(os.path.getsize(os.path.join(path, f))
-                                  for f in os.listdir(path)
-                                  if os.path.isfile(os.path.join(path, f)))
-    return sizes
-
-
-def _fmt_bytes(n, _pos=None):
-    # Decimal units, so the log axis' decade ticks read 100 kB / 1 MB / 10 MB.
-    for unit, scale in (("GB", 1e9), ("MB", 1e6), ("kB", 1e3)):
-        if n >= scale:
-            return f"{n / scale:g} {unit}"
-    return f"{n:g} B"
 
 
 def size_summary(df, sizes, stat="median"):

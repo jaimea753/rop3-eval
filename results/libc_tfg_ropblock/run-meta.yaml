@@ -1,12 +1,12 @@
-generated: '2026-10-02T15:40:27+02:00'
+generated: '2026-10-30T00:24:02+01:00'
 results: results_ropblock_libc.tsv
 mode: ops
 experiment: libc — ROPBLOCK gadget counts
-config: libc_tfg_ropblock-resolved-m7fqj07z.yaml
-config_hash: 4f6f25fb19a2b98b
-rop3_commit: null
-elapsed_seconds: 103.17
-libraries: 20
+config: libc_tfg_ropblock-resolved-2jwl8c5u.yaml
+config_hash: 95c2b0259d7d0259
+rop3_commit: e250ae0aead7288309dfe3d69f9bc20462f9c2d0
+elapsed_seconds: 135.58
+libraries: 31
 reused_from_cache: 0
 workers: 4
 sequential: false

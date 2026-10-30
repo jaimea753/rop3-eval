@@ -1,0 +1,28 @@
+generated: '2026-10-30T02:35:27+01:00'
+results: results_ropchains_rop.tsv
+mode: ropchains
+experiment: Debian multi-arch binaries — ROP-chain search benchmark
+config: ropchains_debian-resolved-vocri5eh.yaml
+config_hash: 21a329de5d6f2ebe
+rop3_commit: e250ae0aead7288309dfe3d69f9bc20462f9c2d0
+elapsed_seconds: 7884.63
+libraries: 231
+reused_from_cache: 0
+workers: 1
+sequential: true
+machine:
+  label: null
+  collected: '2026-09-30'
+  cpu:
+    model: Intel(R) Core(TM) i7-6700 CPU @ 3.40GHz
+    arch: x86_64
+    cores: 4
+    threads: 8
+  memory:
+    total_gib: 31.2
+  os:
+    name: Debian GNU/Linux
+    version: 12 (bookworm)
+  virtualization: null
+  python: 3.12.14
+  notes: null

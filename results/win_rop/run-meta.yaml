@@ -1,11 +1,11 @@
-generated: '2026-10-02T15:41:36+02:00'
+generated: '2026-10-30T02:36:40+01:00'
 results: results_presence_rop_windows.tsv
 mode: presence
 experiment: Windows DLLs — ROP gadget presence
-config: win_rop-resolved-_o0t3gue.yaml
-config_hash: aee25868aa917e83
-rop3_commit: null
-elapsed_seconds: 68.84
+config: win_rop-resolved-df_eib51.yaml
+config_hash: 30ed9a82bd2b652a
+rop3_commit: e250ae0aead7288309dfe3d69f9bc20462f9c2d0
+elapsed_seconds: 73.13
 libraries: 51
 reused_from_cache: 0
 workers: 4

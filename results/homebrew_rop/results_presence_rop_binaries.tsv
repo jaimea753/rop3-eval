@@ -1,0 +1,141 @@
+library	arch	add	sub	neg	mov	lc	ld	st	xor	and	or	not	eqc	ltc	spa	sps	jmp	gsp	pivot
+libsodium_brew_aarch64.dylib	AArch64 (ARM64)	76	0	0	15	0	0	9	0	0	0	0	0	0	0	0	1	0	1
+libexpat_brew_aarch64.dylib	AArch64 (ARM64)	16	0	0	11	0	4	15	0	0	0	0	0	0	0	0	0	0	0
+libsodium_brew_amd64.dylib	x86-64	22	0	0	11	46	2	12	2	0	0	0	0	0	3	0	5	0	20
+libreadline_brew_amd64.dylib	x86-64	7	0	0	6	25	2	18	0	0	0	0	0	0	0	0	0	0	16
+libcairo_brew_aarch64.dylib	AArch64 (ARM64)	98	0	0	66	10	43	98	1	0	1	0	0	0	0	0	0	0	0
+libsqlite3_brew_amd64.dylib	x86-64	28	2	0	13	88	17	75	1	2	0	0	0	2	0	0	10	0	130
+libjpeg_brew_amd64.dylib	x86-64	5	1	0	5	39	0	26	0	0	0	0	0	1	0	0	4	0	4
+liblzma_brew_amd64.dylib	x86-64	12	0	0	7	26	5	18	0	0	3	1	0	0	0	0	0	0	6
+libffi_brew_amd64.dylib	x86-64	5	0	0	1	18	1	5	0	0	1	0	0	0	0	0	0	0	2
+libjq_brew_amd64.dylib	x86-64	8	0	0	17	28	7	23	0	0	2	0	0	0	0	0	0	0	4
+libyaml_brew_aarch64.dylib	AArch64 (ARM64)	18	0	0	2	0	0	11	0	0	0	0	0	0	0	0	0	0	0
+libarchive_brew_amd64.dylib	x86-64	25	3	0	17	39	13	38	0	0	1	0	0	3	0	0	12	0	42
+libonig_brew_aarch64.dylib	AArch64 (ARM64)	18	1	0	21	0	4	11	0	0	0	0	0	0	0	0	0	0	0
+libcrypto_brew_aarch64.dylib	AArch64 (ARM64)	198	0	0	102	11	47	181	4	0	3	0	0	0	0	0	1	0	1
+libexpat_brew_amd64.dylib	x86-64	7	0	0	3	21	3	54	0	0	0	0	0	0	0	0	0	0	0
+libzstd_brew_aarch64.dylib	AArch64 (ARM64)	40	0	0	40	3	4	22	0	0	0	0	0	0	0	0	0	0	0
+libncurses_brew_amd64.dylib	x86-64	16	0	0	6	30	3	19	0	0	0	0	0	0	0	0	0	0	24
+libz_brew_amd64.dylib	x86-64	6	0	0	3	25	0	1	0	0	1	0	0	0	0	0	0	0	0
+libfreetype_brew_amd64.dylib	x86-64	17	2	0	13	46	6	72	2	8	0	0	0	2	0	0	0	0	90
+libffi_brew_aarch64.dylib	AArch64 (ARM64)	1	0	0	3	0	0	1	0	0	0	0	0	0	0	0	0	0	0
+libtiff_brew_amd64.dylib	x86-64	12	0	0	6	29	12	21	1	0	0	0	0	0	0	0	0	0	8
+libpng_brew_amd64.dylib	x86-64	7	1	0	4	26	8	25	0	0	0	0	0	1	0	0	0	0	4
+libglib_brew_amd64.dylib	x86-64	31	1	0	22	55	27	59	0	0	0	1	0	1	0	0	26	0	91
+liblz4_brew_amd64.dylib	x86-64	10	0	0	4	21	1	7	2	0	0	0	0	0	0	0	0	0	2
+libonig_brew_amd64.dylib	x86-64	12	1	0	7	19	12	16	0	0	0	0	0	1	0	0	0	0	6
+libcairo_brew_amd64.dylib	x86-64	27	0	0	21	80	23	66	1	1	0	0	0	0	0	0	40	1	90
+libglib_brew_aarch64.dylib	AArch64 (ARM64)	63	2	0	58	7	51	115	0	1	5	1	0	0	0	0	0	0	0
+libgmp_brew_aarch64.dylib	AArch64 (ARM64)	18	1	1	13	0	4	34	0	1	0	0	0	1	0	0	0	0	0
+liblzma_brew_aarch64.dylib	AArch64 (ARM64)	24	1	0	18	1	2	10	0	1	0	0	0	0	0	0	0	0	0
+libharfbuzz_brew_amd64.dylib	x86-64	20	0	0	15	60	12	33	0	0	2	0	0	0	0	0	14	0	98
+libnettle_brew_amd64.dylib	x86-64	22	0	0	5	47	0	15	0	0	2	0	0	0	0	0	0	0	7
+libarchive_brew_aarch64.dylib	AArch64 (ARM64)	47	2	0	50	4	22	56	0	0	0	0	0	1	0	0	0	0	0
+libnettle_brew_aarch64.dylib	AArch64 (ARM64)	49	0	0	7	0	2	10	0	0	0	0	0	0	0	0	0	0	0
+libjq_brew_aarch64.dylib	AArch64 (ARM64)	21	0	0	46	0	2	12	0	0	0	0	0	0	0	0	0	0	0
+libcurl_brew_amd64.dylib	x86-64	18	2	0	10	39	13	53	0	0	3	0	0	2	0	0	0	0	40
+libzstd_brew_amd64.dylib	x86-64	23	2	0	18	36	9	25	1	0	2	0	0	2	0	0	0	0	15
+libyaml_brew_amd64.dylib	x86-64	5	0	0	0	19	1	14	0	0	0	0	0	0	0	0	0	0	0
+libpng_brew_aarch64.dylib	AArch64 (ARM64)	36	0	0	11	0	0	11	0	0	0	0	0	0	0	0	0	0	0
+libbrotlidec_brew_aarch64.dylib	AArch64 (ARM64)	5	0	0	3	0	0	2	0	0	0	0	0	0	0	0	0	0	0
+libfreetype_brew_aarch64.dylib	AArch64 (ARM64)	40	0	0	31	1	15	57	0	1	0	0	0	0	0	0	0	0	0
+liblz4_brew_aarch64.dylib	AArch64 (ARM64)	11	0	0	17	0	0	4	0	0	0	0	0	0	0	0	0	0	0
+libpcre2_brew_amd64.dylib	x86-64	10	1	0	5	36	3	36	2	0	0	0	0	1	0	0	0	0	15
+libpcre2_brew_aarch64.dylib	AArch64 (ARM64)	12	0	0	12	0	3	10	0	0	0	0	0	0	0	0	0	0	0
+libjpeg_brew_aarch64.dylib	AArch64 (ARM64)	63	1	0	3	0	7	30	0	0	0	0	0	1	0	0	0	0	0
+libbrotlidec_brew_amd64.dylib	x86-64	4	0	0	0	17	0	4	0	0	0	0	0	0	0	0	0	0	0
+libsqlite3_brew_aarch64.dylib	AArch64 (ARM64)	61	3	0	64	3	23	99	0	0	1	0	0	0	0	0	0	0	0
+libharfbuzz_brew_aarch64.dylib	AArch64 (ARM64)	57	0	0	49	2	13	45	0	0	1	0	0	0	0	0	0	0	0
+libssl_brew_aarch64.dylib	AArch64 (ARM64)	58	2	0	62	5	51	88	0	1	4	0	0	2	0	0	0	0	0
+libz_brew_aarch64.dylib	AArch64 (ARM64)	7	1	0	10	1	3	11	0	0	0	0	0	0	0	0	0	0	0
+libtiff_brew_aarch64.dylib	AArch64 (ARM64)	29	0	0	29	1	7	22	0	0	0	0	0	0	0	0	0	0	0
+libssl_brew_amd64.dylib	x86-64	26	2	0	26	54	58	111	2	0	2	0	0	2	0	0	55	1	55
+libreadline_brew_aarch64.dylib	AArch64 (ARM64)	39	0	0	21	0	8	31	0	10	4	0	0	0	0	0	0	0	0
+libgmp_brew_amd64.dylib	x86-64	33	3	2	11	85	5	53	0	1	3	2	1	3	0	0	0	0	96
+libcrypto_brew_amd64.dylib	x86-64	44	1	3	45	198	87	219	6	1	2	0	1	1	0	0	78	0	884
+libcurl_brew_aarch64.dylib	AArch64 (ARM64)	60	0	0	54	4	13	45	0	0	1	0	0	0	0	0	0	0	0
+libncurses_brew_aarch64.dylib	AArch64 (ARM64)	42	0	0	26	0	5	10	0	1	0	0	0	0	0	0	0	0	0
+node_brew_aarch64_bin	AArch64 (ARM64)	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0
+lua_brew_aarch64_bin	AArch64 (ARM64)	3	0	0	2	0	0	0	0	0	0	0	0	0	0	0	0	0	0
+nginx_brew_aarch64_bin	AArch64 (ARM64)	126	3	0	138	3	29	126	0	1	1	0	0	2	0	0	0	0	0
+gh_brew_amd64_bin	x86-64	663	45	8	883	905	436	984	11	22	17	4	54	39	0	0	1572	2	13362
+spotify_cask_aarch64_bin	AArch64 (ARM64)	1774	20	0	616	47	486	1335	5	33	4	0	0	8	0	0	1	0	1
+sqlite3_brew_amd64_bin	x86-64	29	2	0	17	97	18	93	2	1	1	0	0	2	0	0	22	0	143
+sublime-text_cask_aarch64_bin	AArch64 (ARM64)	142	3	0	114	6	52	139	0	0	0	0	0	0	0	0	0	0	0
+go_brew_aarch64_bin	AArch64 (ARM64)	1823	55	5	3802	2670	3027	1481	28	24	28	2	0	18	0	0	2	3	0
+gmake_brew_amd64_bin	x86-64	8	0	0	6	21	2	5	0	0	0	0	0	0	0	0	0	0	4
+gimp_cask_amd64_bin	x86-64	44	2	0	29	880	51	110	1	4	4	0	0	0	0	0	62	0	19933
+curl_brew_amd64_bin	x86-64	9	1	0	4	18	2	14	0	0	1	0	0	1	0	0	0	0	4
+gmake_brew_aarch64_bin	AArch64 (ARM64)	29	0	0	27	0	6	20	0	0	0	0	0	0	0	0	0	0	0
+vlc_cask_amd64_bin	x86-64	1	0	0	0	9	0	0	0	0	0	0	0	0	0	0	0	0	0
+rectangle_cask_aarch64_bin	AArch64 (ARM64)	231	0	0	83	10	17	188	0	0	0	0	0	0	0	0	1	0	0
+vlc_cask_aarch64_bin	AArch64 (ARM64)	1	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0
+google-chrome_cask_aarch64_bin	AArch64 (ARM64)	6	0	0	3	0	1	1	0	0	0	0	0	0	0	0	0	0	0
+tree_brew_aarch64_bin	AArch64 (ARM64)	14	0	0	7	0	1	3	0	0	0	0	0	0	0	0	0	0	0
+signal_cask_aarch64_bin	AArch64 (ARM64)	1	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0
+zstd_brew_amd64_bin	x86-64	5	2	0	8	26	4	11	1	0	0	0	0	2	0	0	0	1	0
+git_brew_aarch64_bin	AArch64 (ARM64)	254	7	0	152	11	87	241	0	2	6	0	0	2	0	0	0	0	0
+obs_cask_aarch64_bin	AArch64 (ARM64)	163	3	0	62	1	26	101	0	0	0	0	0	0	0	0	0	0	0
+rectangle_cask_amd64_bin	x86-64	67	3	0	45	114	14	94	1	2	19	1	0	3	0	0	72	1	189
+keepassxc_cask_aarch64_bin	AArch64 (ARM64)	146	5	0	92	1	23	93	0	1	0	0	0	0	0	0	0	0	0
+google-chrome_cask_amd64_bin	x86-64	3	0	0	1	20	1	3	0	0	0	0	0	0	0	0	0	0	0
+keepassxc_cask_amd64_bin	x86-64	37	0	0	32	165	45	135	0	3	5	0	0	0	0	0	54	1	396
+ssh_brew_amd64_bin	x86-64	7	0	0	0	160	5	9	1	0	0	0	0	0	0	0	0	0	1584
+sublime-text_cask_amd64_bin	x86-64	99	7	0	93	498	91	325	5	2	9	0	0	5	0	0	174	2	5510
+redis-server_brew_aarch64_bin	AArch64 (ARM64)	163	9	0	79	7	41	183	0	3	5	0	0	1	0	0	0	0	0
+gpg_brew_aarch64_bin	AArch64 (ARM64)	86	1	0	67	5	18	46	0	0	0	0	0	1	0	0	0	0	0
+signal_cask_amd64_bin	x86-64	1	0	0	0	2	0	0	0	0	0	0	0	0	0	0	0	0	0
+zstd_brew_aarch64_bin	AArch64 (ARM64)	17	1	0	15	0	0	9	0	0	0	0	0	1	0	0	0	0	0
+spotify_cask_amd64_bin	x86-64	259	22	3	297	1789	327	1353	23	22	57	1	13	18	0	0	3906	7	83421
+inkscape_cask_aarch64_bin	AArch64 (ARM64)	3	0	0	1	0	0	1	0	0	0	0	0	0	0	0	0	0	0
+curl_brew_aarch64_bin	AArch64 (ARM64)	26	0	0	17	1	4	10	0	0	0	0	0	0	0	0	0	0	0
+go_brew_amd64_bin	x86-64	401	28	5	500	480	237	503	12	13	15	3	31	25	0	0	1090	3	1090
+xz_brew_aarch64_bin	AArch64 (ARM64)	15	0	0	8	0	0	6	0	0	0	0	0	0	0	0	0	0	0
+bash_brew_aarch64_bin	AArch64 (ARM64)	58	0	0	35	2	23	75	0	0	0	0	0	0	0	0	0	0	0
+redis-server_brew_amd64_bin	x86-64	40	2	0	19	78	28	94	4	1	5	0	0	2	0	0	24	0	108
+ssh_brew_aarch64_bin	AArch64 (ARM64)	8	0	0	122	0	2	1	0	0	0	0	0	0	0	0	0	0	0
+gawk_brew_amd64_bin	x86-64	12	0	0	11	45	8	30	0	1	0	0	0	0	0	0	0	0	42
+gawk_brew_aarch64_bin	AArch64 (ARM64)	57	1	0	39	1	17	70	0	0	0	0	0	0	0	0	0	0	0
+firefox_cask_aarch64_bin	AArch64 (ARM64)	19	1	0	9	0	2	5	0	0	0	0	0	1	0	0	0	0	0
+ffmpeg_brew_amd64_bin	x86-64	16	0	0	9	44	3	6	0	0	0	0	0	0	0	0	0	0	4
+lua_brew_amd64_bin	x86-64	2	0	0	0	13	0	0	0	0	0	0	0	0	0	0	0	0	0
+inkscape_cask_amd64_bin	x86-64	1	0	0	0	10	0	1	0	0	0	0	0	0	0	0	0	0	0
+gimp_cask_aarch64_bin	AArch64 (ARM64)	368	0	0	99	4	784	334	0	0	0	0	0	0	0	0	0	0	0
+nano_brew_amd64_bin	x86-64	15	1	0	8	25	4	22	0	0	0	0	0	1	0	0	0	0	6
+bash_brew_amd64_bin	x86-64	15	1	0	11	51	3	48	0	0	0	0	0	1	0	0	7	0	63
+node_brew_amd64_bin	x86-64	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0
+htop_brew_amd64_bin	x86-64	12	0	0	6	27	3	21	0	0	1	0	0	0	0	0	0	0	8
+ffmpeg_brew_aarch64_bin	AArch64 (ARM64)	40	0	0	21	0	5	11	0	0	0	0	0	0	0	0	0	0	0
+slack_cask_aarch64_bin	AArch64 (ARM64)	1	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0
+slack_cask_amd64_bin	x86-64	1	0	0	0	2	0	0	0	0	0	0	0	0	0	0	0	0	0
+blender_cask_aarch64_bin	AArch64 (ARM64)	2350	40	2	800	132	1060	2220	2	19	15	0	0	16	0	0	5	0	1
+vim_brew_aarch64_bin	AArch64 (ARM64)	207	4	0	106	7	60	187	0	0	3	0	0	2	0	0	0	0	0
+git_brew_amd64_bin	x86-64	54	2	0	26	110	28	133	2	1	2	0	0	2	0	0	112	0	308
+htop_brew_aarch64_bin	AArch64 (ARM64)	33	0	0	20	1	13	29	0	0	0	0	0	0	0	0	0	0	0
+visual-studio-code_cask_aarch64_bin	AArch64 (ARM64)	1	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0
+sqlite3_brew_aarch64_bin	AArch64 (ARM64)	70	4	0	69	4	31	121	0	0	1	0	0	0	0	0	0	0	0
+fd_brew_amd64_bin	x86-64	40	4	0	35	113	23	82	4	1	5	0	0	4	0	0	18	2	378
+nginx_brew_amd64_bin	x86-64	22	5	2	23	52	5	105	1	0	1	0	3	5	0	0	7	0	56
+ripgrep_brew_amd64_bin	x86-64	56	4	0	55	156	27	121	4	1	4	0	0	4	0	0	110	2	660
+nano_brew_aarch64_bin	AArch64 (ARM64)	40	1	0	28	1	10	40	0	1	0	0	0	0	0	0	0	0	0
+gpg_brew_amd64_bin	x86-64	29	0	0	8	64	4	36	1	0	0	0	0	0	0	0	0	0	90
+firefox_cask_amd64_bin	x86-64	9	0	0	5	23	2	9	0	0	0	0	0	0	0	0	0	0	0
+visual-studio-code_cask_amd64_bin	x86-64	1	0	0	0	2	0	0	0	0	0	0	0	0	0	0	0	0	0
+wget_brew_aarch64_bin	AArch64 (ARM64)	57	0	0	45	0	3	15	0	0	0	0	0	0	0	0	0	0	0
+fd_brew_aarch64_bin	AArch64 (ARM64)	119	2	0	81	5	15	103	2	1	1	0	0	2	0	0	0	0	0
+blender_cask_amd64_bin	x86-64	678	38	8	402	3580	675	2171	44	33	68	3	36	29	0	0	27555	17	318970
+jq_brew_amd64_bin	x86-64	0	0	0	0	8	0	0	0	0	0	0	0	0	0	0	0	0	0
+discord_cask_amd64_bin	x86-64	1	0	0	0	2	0	0	0	0	0	0	0	0	0	0	0	0	0
+xz_brew_amd64_bin	x86-64	6	0	0	3	20	0	1	0	0	1	0	0	0	0	0	0	0	6
+vim_brew_amd64_bin	x86-64	49	1	0	27	123	20	101	0	0	2	0	0	0	1	0	133	1	495
+jq_brew_aarch64_bin	AArch64 (ARM64)	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0
+discord_cask_aarch64_bin	AArch64 (ARM64)	1	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0
+tree_brew_amd64_bin	x86-64	2	0	0	1	16	0	1	0	0	0	0	0	0	0	0	0	0	0
+tmux_brew_aarch64_bin	AArch64 (ARM64)	77	0	0	51	9	22	73	0	1	2	0	0	0	0	0	0	0	0
+iterm2_cask_amd64_bin	x86-64	553	8	1	224	1449	246	604	8	14	92	1	1	4	0	0	3534	8	51522
+iterm2_cask_aarch64_bin	AArch64 (ARM64)	1151	11	0	378	68	220	746	2	5	3	0	0	4	0	0	0	0	0
+ripgrep_brew_aarch64_bin	AArch64 (ARM64)	146	2	0	128	8	27	178	2	1	0	0	0	1	0	0	0	0	0
+wget_brew_amd64_bin	x86-64	16	1	0	8	30	2	18	1	0	0	0	0	1	0	0	0	0	20
+gh_brew_aarch64_bin	AArch64 (ARM64)	3960	101	3	6832	4573	5397	3013	26	55	35	3	0	29	0	0	2	0	0
+obs_cask_amd64_bin	x86-64	30	0	0	17	161	26	95	0	0	5	0	0	0	0	0	19	0	418
+tmux_brew_amd64_bin	x86-64	23	0	0	16	49	19	68	0	0	0	0	0	0	0	0	16	0	48

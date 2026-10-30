@@ -1,12 +1,12 @@
-generated: '2026-10-02T15:38:44+02:00'
+generated: '2026-10-30T00:21:46+01:00'
 results: results_rop_libc.tsv
 mode: ops
 experiment: libc — ROP gadget counts
-config: libc_tfg_rop-resolved-m6zre68a.yaml
-config_hash: 7f7ba0754ba39704
-rop3_commit: null
-elapsed_seconds: 29.02
-libraries: 20
+config: libc_tfg_rop-resolved-bwov0ydd.yaml
+config_hash: f8790b2e3f4c577d
+rop3_commit: e250ae0aead7288309dfe3d69f9bc20462f9c2d0
+elapsed_seconds: 47.06
+libraries: 31
 reused_from_cache: 0
 workers: 4
 sequential: false

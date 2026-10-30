@@ -1,0 +1,522 @@
+library	arch	chain	found	seconds	extract_seconds	status
+libLLVM_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	116.2918	113.7484	not-found
+libLLVM_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	121.7002	113.7484	not-found
+libLLVM_debian_amd64.so	x86-64	mprotect_amd64.txt	True	1.2025	69.3814	found
+libLLVM_debian_amd64.so	x86-64	syscall_exec_amd64.txt	True	3.1605	69.3814	found
+libLLVM_debian_amd64.so	x86-64	turing_amd64.txt	False	13.7928	69.3814	not-found
+libLLVM_debian_x86.so	x86	mprotect_x86.txt	True	0.7867	82.1944	found
+libLLVM_debian_x86.so	x86	syscall_exec_x86.txt	True	3.1365	82.1944	found
+libQt6Core_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	7.2574	7.1573	not-found
+libQt6Core_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	8.0199	7.1573	not-found
+libQt6Core_debian_amd64.so	x86-64	mprotect_amd64.txt	True	0.3291	6.1091	found
+libQt6Core_debian_amd64.so	x86-64	syscall_exec_amd64.txt	True	0.8198	6.1091	found
+libQt6Core_debian_amd64.so	x86-64	turing_amd64.txt	False	2.7412	6.1091	not-found
+libQt6Core_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	8.942	7.7801	not-found
+libQt6Core_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	10.0172	7.7801	not-found
+libQt6Core_debian_x86.so	x86	mprotect_x86.txt	True	0.2812	6.4357	found
+libQt6Core_debian_x86.so	x86	syscall_exec_x86.txt	True	1.1107	6.4357	found
+libQt6Gui_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	11.0261	10.6622	not-found
+libQt6Gui_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	12.2967	10.6622	not-found
+libQt6Gui_debian_amd64.so	x86-64	mprotect_amd64.txt	True	0.3411	8.1209	found
+libQt6Gui_debian_amd64.so	x86-64	syscall_exec_amd64.txt	True	1.2811	8.1209	found
+libQt6Gui_debian_amd64.so	x86-64	turing_amd64.txt	False	3.2142	8.1209	not-found
+libQt6Gui_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	14.1418	12.0418	not-found
+libQt6Gui_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	15.6837	12.0418	not-found
+libQt6Gui_debian_x86.so	x86	mprotect_x86.txt	True	0.3331	9.9129	found
+libQt6Gui_debian_x86.so	x86	syscall_exec_x86.txt	True	1.3993	9.9129	found
+libQt6WebEngineCore_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	281.9861	309.7845	not-found
+libQt6WebEngineCore_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	305.1374	309.7845	not-found
+libQt6WebEngineCore_debian_amd64.so	x86-64	mprotect_amd64.txt	True	3.1503	260.6371	found
+libQt6WebEngineCore_debian_amd64.so	x86-64	syscall_exec_amd64.txt	True	9.1332	260.6371	found
+libQt6WebEngineCore_debian_amd64.so	x86-64	turing_amd64.txt	True	43.7192	260.6371	found
+libQt6WebEngineCore_debian_x86.so	x86	mprotect_x86.txt	True	2.2624	326.8216	found
+libQt6WebEngineCore_debian_x86.so	x86	syscall_exec_x86.txt	True	11.3644	326.8216	found
+libavcodec_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	20.7446	19.3931	not-found
+libavcodec_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	21.0801	19.3931	not-found
+libavcodec_debian_amd64.so	x86-64	mprotect_amd64.txt	True	0.282	8.9196	found
+libavcodec_debian_amd64.so	x86-64	syscall_exec_amd64.txt	False	0.7239	8.9196	not-found
+libavcodec_debian_amd64.so	x86-64	turing_amd64.txt	False	1.1356	8.9196	not-found
+libavcodec_debian_x86.so	x86	mprotect_x86.txt	True	0.318	11.9714	found
+libavcodec_debian_x86.so	x86	syscall_exec_x86.txt	True	1.1349	11.9714	found
+libbz2_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	0.2339	0.1081	not-found
+libbz2_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	0.5224	0.1081	not-found
+libbz2_debian_amd64.so	x86-64	mprotect_amd64.txt	False	1.1974	0.0527	not-found
+libbz2_debian_amd64.so	x86-64	syscall_exec_amd64.txt	False	1.4405	0.0527	not-found
+libbz2_debian_amd64.so	x86-64	turing_amd64.txt	False	0.8409	0.0527	not-found
+libbz2_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	0.3944	0.1194	not-found
+libbz2_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	0.462	0.1194	not-found
+libbz2_debian_x86.so	x86	mprotect_x86.txt	False	0.1729	0.0653	not-found
+libbz2_debian_x86.so	x86	syscall_exec_x86.txt	False	0.5621	0.0653	not-found
+libc_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	2.1046	2.859	not-found
+libc_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	True	2.4921	2.859	found
+libc_debian_amd64.so	x86-64	mprotect_amd64.txt	True	0.2591	3.1434	found
+libc_debian_amd64.so	x86-64	syscall_exec_amd64.txt	True	0.7066	3.1434	found
+libc_debian_amd64.so	x86-64	turing_amd64.txt	False	2.0613	3.1434	not-found
+libc_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	3.1946	3.0302	not-found
+libc_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	True	3.6685	3.0302	found
+libc_debian_x86.so	x86	mprotect_x86.txt	True	0.2605	3.7198	found
+libc_debian_x86.so	x86	syscall_exec_x86.txt	True	1.0564	3.7198	found
+libcairo_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	2.2709	2.1484	not-found
+libcairo_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	2.6802	2.1484	not-found
+libcairo_debian_amd64.so	x86-64	mprotect_amd64.txt	False	19.1258	1.7711	not-found
+libcairo_debian_amd64.so	x86-64	syscall_exec_amd64.txt	False	19.0933	1.7711	not-found
+libcairo_debian_amd64.so	x86-64	turing_amd64.txt	False	1.5659	1.7711	not-found
+libcairo_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	3.142	2.0852	not-found
+libcairo_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	3.8111	2.0852	not-found
+libcairo_debian_x86.so	x86	mprotect_x86.txt	True	0.2203	2.0007	found
+libcairo_debian_x86.so	x86	syscall_exec_x86.txt	True	0.8129	2.0007	found
+libcap_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	0.1778	0.0709	not-found
+libcap_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	0.4687	0.0709	not-found
+libcap_debian_amd64.so	x86-64	mprotect_amd64.txt	False	0.1691	0.0664	not-found
+libcap_debian_amd64.so	x86-64	syscall_exec_amd64.txt	False	0.4519	0.0664	not-found
+libcap_debian_amd64.so	x86-64	turing_amd64.txt	False	0.8378	0.0664	not-found
+libcap_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	0.3258	0.0748	not-found
+libcap_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	0.4061	0.0748	not-found
+libcap_debian_x86.so	x86	mprotect_x86.txt	False	0.1673	0.0841	not-found
+libcap_debian_x86.so	x86	syscall_exec_x86.txt	False	0.5448	0.0841	not-found
+libcrypto_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	7.5355	7.3215	not-found
+libcrypto_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	8.2904	7.3215	not-found
+libcrypto_debian_amd64.so	x86-64	mprotect_amd64.txt	True	0.2711	6.2939	found
+libcrypto_debian_amd64.so	x86-64	syscall_exec_amd64.txt	True	0.8069	6.2939	found
+libcrypto_debian_amd64.so	x86-64	turing_amd64.txt	False	2.1692	6.2939	not-found
+libcrypto_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	7.2818	6.0957	not-found
+libcrypto_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	7.1388	6.0957	not-found
+libcrypto_debian_x86.so	x86	mprotect_x86.txt	True	0.27	8.2389	found
+libcrypto_debian_x86.so	x86	syscall_exec_x86.txt	True	1.0713	8.2389	found
+libcurl_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	1.3621	1.2412	not-found
+libcurl_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	1.7648	1.2412	not-found
+libcurl_debian_amd64.so	x86-64	mprotect_amd64.txt	False	0.1933	0.9807	not-found
+libcurl_debian_amd64.so	x86-64	syscall_exec_amd64.txt	False	0.5203	0.9807	not-found
+libcurl_debian_amd64.so	x86-64	turing_amd64.txt	False	1.2752	0.9807	not-found
+libcurl_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	1.6436	1.1706	not-found
+libcurl_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	1.7516	1.1706	not-found
+libcurl_debian_x86.so	x86	mprotect_x86.txt	False	0.1964	1.1278	not-found
+libcurl_debian_x86.so	x86	syscall_exec_x86.txt	False	0.6876	1.1278	not-found
+libdbus_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	0.6512	0.5765	not-found
+libdbus_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	0.9952	0.5765	not-found
+libdbus_debian_amd64.so	x86-64	mprotect_amd64.txt	False	4.1223	0.6312	not-found
+libdbus_debian_amd64.so	x86-64	syscall_exec_amd64.txt	False	4.3094	0.6312	not-found
+libdbus_debian_amd64.so	x86-64	turing_amd64.txt	False	1.1385	0.6312	not-found
+libdbus_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	0.8444	0.6269	not-found
+libdbus_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	0.9231	0.6269	not-found
+libdbus_debian_x86.so	x86	mprotect_x86.txt	True	0.1853	0.8317	found
+libdbus_debian_x86.so	x86	syscall_exec_x86.txt	True	0.6367	0.8317	found
+libexpat_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	0.3654	0.2632	not-found
+libexpat_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	0.6738	0.2632	not-found
+libexpat_debian_amd64.so	x86-64	mprotect_amd64.txt	False	2.3516	0.4289	not-found
+libexpat_debian_amd64.so	x86-64	syscall_exec_amd64.txt	False	2.6042	0.4289	not-found
+libexpat_debian_amd64.so	x86-64	turing_amd64.txt	False	1.1297	0.4289	not-found
+libexpat_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	0.5411	0.2644	not-found
+libexpat_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	0.6114	0.2644	not-found
+libexpat_debian_x86.so	x86	mprotect_x86.txt	False	0.1781	0.3567	not-found
+libexpat_debian_x86.so	x86	syscall_exec_x86.txt	False	0.615	0.3567	not-found
+libffi_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	0.1808	0.0554	not-found
+libffi_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	0.4717	0.0554	not-found
+libffi_debian_amd64.so	x86-64	mprotect_amd64.txt	False	0.6283	0.056	not-found
+libffi_debian_amd64.so	x86-64	syscall_exec_amd64.txt	False	0.9033	0.056	not-found
+libffi_debian_amd64.so	x86-64	turing_amd64.txt	False	0.9357	0.056	not-found
+libffi_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	0.3087	0.0554	not-found
+libffi_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	0.3904	0.0554	not-found
+libffi_debian_x86.so	x86	mprotect_x86.txt	False	0.185	0.0658	not-found
+libffi_debian_x86.so	x86	syscall_exec_x86.txt	False	0.5721	0.0658	not-found
+libfontconfig_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	0.5644	0.4564	not-found
+libfontconfig_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	0.9077	0.4564	not-found
+libfontconfig_debian_amd64.so	x86-64	mprotect_amd64.txt	False	3.4633	0.4072	not-found
+libfontconfig_debian_amd64.so	x86-64	syscall_exec_amd64.txt	False	3.7605	0.4072	not-found
+libfontconfig_debian_amd64.so	x86-64	turing_amd64.txt	False	1.0661	0.4072	not-found
+libfontconfig_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	0.8659	0.4749	not-found
+libfontconfig_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	1.1188	0.4749	not-found
+libfontconfig_debian_x86.so	x86	mprotect_x86.txt	True	0.1814	0.4695	found
+libfontconfig_debian_x86.so	x86	syscall_exec_x86.txt	True	0.6571	0.4695	found
+libfreetype_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	1.3271	1.2397	not-found
+libfreetype_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	1.7217	1.2397	not-found
+libfreetype_debian_amd64.so	x86-64	mprotect_amd64.txt	False	11.7992	1.0292	not-found
+libfreetype_debian_amd64.so	x86-64	syscall_exec_amd64.txt	False	12.0847	1.0292	not-found
+libfreetype_debian_amd64.so	x86-64	turing_amd64.txt	False	1.2821	1.0292	not-found
+libfreetype_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	1.7301	1.3549	not-found
+libfreetype_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	1.8403	1.3549	not-found
+libfreetype_debian_x86.so	x86	mprotect_x86.txt	True	0.2037	1.2012	found
+libfreetype_debian_x86.so	x86	syscall_exec_x86.txt	True	0.7613	1.2012	found
+libgcc_s_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	0.3139	0.1767	not-found
+libgcc_s_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	0.6061	0.1767	not-found
+libgcc_s_debian_amd64.so	x86-64	mprotect_amd64.txt	True	0.1793	0.2351	found
+libgcc_s_debian_amd64.so	x86-64	syscall_exec_amd64.txt	True	0.4543	0.2351	found
+libgcc_s_debian_amd64.so	x86-64	turing_amd64.txt	False	1.0091	0.2351	not-found
+libgcc_s_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	0.5271	0.212	not-found
+libgcc_s_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	0.6443	0.212	not-found
+libgcc_s_debian_x86.so	x86	mprotect_x86.txt	False	0.1722	0.231	not-found
+libgcc_s_debian_x86.so	x86	syscall_exec_x86.txt	False	0.608	0.231	not-found
+libgcrypt_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	1.4923	1.3914	not-found
+libgcrypt_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	1.9074	1.3914	not-found
+libgcrypt_debian_amd64.so	x86-64	mprotect_amd64.txt	True	0.2118	1.4734	found
+libgcrypt_debian_amd64.so	x86-64	syscall_exec_amd64.txt	True	0.5586	1.4734	found
+libgcrypt_debian_amd64.so	x86-64	turing_amd64.txt	False	1.4541	1.4734	not-found
+libgcrypt_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	2.2763	1.6264	not-found
+libgcrypt_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	2.1706	1.6264	not-found
+libgcrypt_debian_x86.so	x86	mprotect_x86.txt	False	0.1871	1.387	not-found
+libgcrypt_debian_x86.so	x86	syscall_exec_x86.txt	False	0.683	1.387	not-found
+libgdkpixbuf_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	0.3675	0.2554	not-found
+libgdkpixbuf_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	0.6817	0.2554	not-found
+libgdkpixbuf_debian_amd64.so	x86-64	mprotect_amd64.txt	False	2.0986	0.2209	not-found
+libgdkpixbuf_debian_amd64.so	x86-64	syscall_exec_amd64.txt	False	2.3913	0.2209	not-found
+libgdkpixbuf_debian_amd64.so	x86-64	turing_amd64.txt	False	0.9879	0.2209	not-found
+libgdkpixbuf_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	0.5609	0.2756	not-found
+libgdkpixbuf_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	0.6517	0.2756	not-found
+libgdkpixbuf_debian_x86.so	x86	mprotect_x86.txt	False	0.1696	0.2913	not-found
+libgdkpixbuf_debian_x86.so	x86	syscall_exec_x86.txt	False	0.5728	0.2913	not-found
+libglib_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	1.708	1.6736	not-found
+libglib_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	2.1106	1.6736	not-found
+libglib_debian_amd64.so	x86-64	mprotect_amd64.txt	True	0.2124	1.5006	found
+libglib_debian_amd64.so	x86-64	syscall_exec_amd64.txt	True	0.5815	1.5006	found
+libglib_debian_amd64.so	x86-64	turing_amd64.txt	False	1.7484	1.5006	not-found
+libglib_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	2.0508	1.8338	not-found
+libglib_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	2.0976	1.8338	not-found
+libglib_debian_x86.so	x86	mprotect_x86.txt	True	0.2076	2.1389	found
+libglib_debian_x86.so	x86	syscall_exec_x86.txt	True	0.827	2.1389	found
+libgmp_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	0.9893	0.8206	not-found
+libgmp_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	1.4051	0.8206	not-found
+libgmp_debian_amd64.so	x86-64	mprotect_amd64.txt	False	7.881	0.5915	not-found
+libgmp_debian_amd64.so	x86-64	syscall_exec_amd64.txt	False	8.1102	0.5915	not-found
+libgmp_debian_amd64.so	x86-64	turing_amd64.txt	False	1.1241	0.5915	not-found
+libgmp_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	1.271	0.8252	not-found
+libgmp_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	1.371	0.8252	not-found
+libgmp_debian_x86.so	x86	mprotect_x86.txt	True	0.1965	0.8607	found
+libgmp_debian_x86.so	x86	syscall_exec_x86.txt	True	0.7523	0.8607	found
+libgnutls_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	3.1489	2.9121	not-found
+libgnutls_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	3.5759	2.9121	not-found
+libgnutls_debian_amd64.so	x86-64	mprotect_amd64.txt	True	0.2258	2.0263	found
+libgnutls_debian_amd64.so	x86-64	syscall_exec_amd64.txt	True	0.5844	2.0263	found
+libgnutls_debian_amd64.so	x86-64	turing_amd64.txt	False	1.5733	2.0263	not-found
+libgnutls_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	3.276	2.6155	not-found
+libgnutls_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	3.3667	2.6155	not-found
+libgnutls_debian_x86.so	x86	mprotect_x86.txt	True	0.2396	2.1185	found
+libgnutls_debian_x86.so	x86	syscall_exec_x86.txt	True	0.78	2.1185	found
+libgtk3_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	9.8289	10.3195	not-found
+libgtk3_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	11.2094	10.3195	not-found
+libgtk3_debian_amd64.so	x86-64	mprotect_amd64.txt	True	0.4366	8.9807	found
+libgtk3_debian_amd64.so	x86-64	syscall_exec_amd64.txt	True	1.1563	8.9807	found
+libgtk3_debian_amd64.so	x86-64	turing_amd64.txt	False	4.2312	8.9807	not-found
+libgtk3_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	10.2014	11.3742	not-found
+libgtk3_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	10.0331	11.3742	not-found
+libgtk3_debian_x86.so	x86	mprotect_x86.txt	True	0.3174	14.1325	found
+libgtk3_debian_x86.so	x86	syscall_exec_x86.txt	True	1.311	14.1325	found
+libharfbuzz_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	2.0657	1.9245	not-found
+libharfbuzz_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	2.43	1.9245	not-found
+libharfbuzz_debian_amd64.so	x86-64	mprotect_amd64.txt	True	0.2079	1.2403	found
+libharfbuzz_debian_amd64.so	x86-64	syscall_exec_amd64.txt	True	0.5427	1.2403	found
+libharfbuzz_debian_amd64.so	x86-64	turing_amd64.txt	False	1.3053	1.2403	not-found
+libharfbuzz_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	2.7253	2.1819	not-found
+libharfbuzz_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	2.6546	2.1819	not-found
+libharfbuzz_debian_x86.so	x86	mprotect_x86.txt	True	0.203	1.5434	found
+libharfbuzz_debian_x86.so	x86	syscall_exec_x86.txt	True	0.7137	1.5434	found
+libicui18n_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	4.6522	4.3858	not-found
+libicui18n_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	5.2966	4.3858	not-found
+libicui18n_debian_amd64.so	x86-64	mprotect_amd64.txt	True	0.2775	4.1908	found
+libicui18n_debian_amd64.so	x86-64	syscall_exec_amd64.txt	True	0.7692	4.1908	found
+libicui18n_debian_amd64.so	x86-64	turing_amd64.txt	False	2.2901	4.1908	not-found
+libicui18n_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	4.7242	4.5091	not-found
+libicui18n_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	4.8059	4.5091	not-found
+libicui18n_debian_x86.so	x86	mprotect_x86.txt	True	0.2626	5.0683	found
+libicui18n_debian_x86.so	x86	syscall_exec_x86.txt	True	1.0539	5.0683	found
+libicuuc_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	2.6132	2.5907	not-found
+libicuuc_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	3.1188	2.5907	not-found
+libicuuc_debian_amd64.so	x86-64	mprotect_amd64.txt	True	0.2705	2.4679	found
+libicuuc_debian_amd64.so	x86-64	syscall_exec_amd64.txt	True	0.7045	2.4679	found
+libicuuc_debian_amd64.so	x86-64	turing_amd64.txt	False	1.8251	2.4679	not-found
+libicuuc_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	2.8613	2.5904	not-found
+libicuuc_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	2.9782	2.5904	not-found
+libicuuc_debian_x86.so	x86	mprotect_x86.txt	True	0.232	3.0272	found
+libicuuc_debian_x86.so	x86	syscall_exec_x86.txt	True	0.9184	3.0272	found
+libinkscape_base_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	33.0435	29.685	not-found
+libinkscape_base_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	34.4894	29.685	not-found
+libinkscape_base_debian_amd64.so	x86-64	mprotect_amd64.txt	True	0.4506	20.7752	found
+libinkscape_base_debian_amd64.so	x86-64	syscall_exec_amd64.txt	True	1.3235	20.7752	found
+libinkscape_base_debian_amd64.so	x86-64	turing_amd64.txt	False	4.1087	20.7752	not-found
+libinkscape_base_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	34.556	30.1763	not-found
+libinkscape_base_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	36.4328	30.1763	not-found
+libinkscape_base_debian_x86.so	x86	mprotect_x86.txt	True	0.4418	21.9177	found
+libinkscape_base_debian_x86.so	x86	syscall_exec_x86.txt	True	1.8266	21.9177	found
+libjpeg_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	0.7565	0.5957	not-found
+libjpeg_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	1.1223	0.5957	not-found
+libjpeg_debian_amd64.so	x86-64	mprotect_amd64.txt	False	6.4157	0.4012	not-found
+libjpeg_debian_amd64.so	x86-64	syscall_exec_amd64.txt	False	6.5841	0.4012	not-found
+libjpeg_debian_amd64.so	x86-64	turing_amd64.txt	False	0.9912	0.4012	not-found
+libjpeg_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	0.8673	0.4764	not-found
+libjpeg_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	0.9105	0.4764	not-found
+libjpeg_debian_x86.so	x86	mprotect_x86.txt	False	0.1763	0.6446	not-found
+libjpeg_debian_x86.so	x86	syscall_exec_x86.txt	False	0.6098	0.6446	not-found
+libjsc_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	52.3677	47.5455	not-found
+libjsc_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	53.2121	47.5455	not-found
+libjsc_debian_amd64.so	x86-64	mprotect_amd64.txt	True	0.5566	25.0894	found
+libjsc_debian_amd64.so	x86-64	syscall_exec_amd64.txt	True	1.5623	25.0894	found
+libjsc_debian_amd64.so	x86-64	turing_amd64.txt	False	6.1901	25.0894	not-found
+libjsc_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	44.5249	45.1978	not-found
+libjsc_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	47.1947	45.1978	not-found
+libjsc_debian_x86.so	x86	mprotect_x86.txt	True	0.3439	14.3651	found
+libjsc_debian_x86.so	x86	syscall_exec_x86.txt	True	1.4019	14.3651	found
+libjvm_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	31.3174	31.5208	not-found
+libjvm_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	34.6604	31.5208	not-found
+libjvm_debian_amd64.so	x86-64	mprotect_amd64.txt	True	0.7189	26.6966	found
+libjvm_debian_amd64.so	x86-64	syscall_exec_amd64.txt	True	2.0623	26.6966	found
+libjvm_debian_amd64.so	x86-64	turing_amd64.txt	False	8.3263	26.6966	not-found
+libjvm_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	29.7527	29.7208	not-found
+libjvm_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	32.0126	29.7208	not-found
+libjvm_debian_x86.so	x86	mprotect_x86.txt	True	0.5351	30.6165	found
+libjvm_debian_x86.so	x86	syscall_exec_x86.txt	True	2.4956	30.6165	found
+liblzma_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	0.397	0.2927	not-found
+liblzma_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	0.7143	0.2927	not-found
+liblzma_debian_amd64.so	x86-64	mprotect_amd64.txt	False	2.61	0.2763	not-found
+liblzma_debian_amd64.so	x86-64	syscall_exec_amd64.txt	False	2.797	0.2763	not-found
+liblzma_debian_amd64.so	x86-64	turing_amd64.txt	False	0.9824	0.2763	not-found
+liblzma_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	0.6197	0.304	not-found
+liblzma_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	0.7051	0.304	not-found
+liblzma_debian_x86.so	x86	mprotect_x86.txt	True	0.1771	0.3096	found
+liblzma_debian_x86.so	x86	syscall_exec_x86.txt	True	0.5987	0.3096	found
+libmergedlo_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	98.8674	93.0144	not-found
+libmergedlo_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	104.5262	93.0144	not-found
+libmergedlo_debian_amd64.so	x86-64	mprotect_amd64.txt	True	0.8626	66.7375	found
+libmergedlo_debian_amd64.so	x86-64	syscall_exec_amd64.txt	True	2.4715	66.7375	found
+libmergedlo_debian_amd64.so	x86-64	turing_amd64.txt	False	10.0288	66.7375	not-found
+libmergedlo_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	106.1407	111.152	not-found
+libmergedlo_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	112.7122	111.152	not-found
+libmount_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	0.8916	0.7936	not-found
+libmount_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	1.2435	0.7936	not-found
+libmount_debian_amd64.so	x86-64	mprotect_amd64.txt	True	0.1872	0.686	found
+libmount_debian_amd64.so	x86-64	syscall_exec_amd64.txt	True	0.5335	0.686	found
+libmount_debian_amd64.so	x86-64	turing_amd64.txt	False	1.1252	0.686	not-found
+libmount_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	1.0756	0.7328	not-found
+libmount_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	1.2007	0.7328	not-found
+libmount_debian_x86.so	x86	mprotect_x86.txt	False	0.2026	0.9169	not-found
+libmount_debian_x86.so	x86	syscall_exec_x86.txt	False	0.639	0.9169	not-found
+libnettle_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	0.5847	0.4242	not-found
+libnettle_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	0.8163	0.4242	not-found
+libnettle_debian_amd64.so	x86-64	mprotect_amd64.txt	False	3.5995	0.2877	not-found
+libnettle_debian_amd64.so	x86-64	syscall_exec_amd64.txt	False	3.9498	0.2877	not-found
+libnettle_debian_amd64.so	x86-64	turing_amd64.txt	False	0.9016	0.2877	not-found
+libnettle_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	0.7326	0.4018	not-found
+libnettle_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	0.8908	0.4018	not-found
+libnettle_debian_x86.so	x86	mprotect_x86.txt	True	0.1755	0.4849	found
+libnettle_debian_x86.so	x86	syscall_exec_x86.txt	True	0.5934	0.4849	found
+libpango_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	0.6542	0.5842	not-found
+libpango_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	0.9983	0.5842	not-found
+libpango_debian_amd64.so	x86-64	mprotect_amd64.txt	False	4.4194	0.5608	not-found
+libpango_debian_amd64.so	x86-64	syscall_exec_amd64.txt	False	4.6972	0.5608	not-found
+libpango_debian_amd64.so	x86-64	turing_amd64.txt	False	1.1677	0.5608	not-found
+libpango_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	0.853	0.6311	not-found
+libpango_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	0.9841	0.6311	not-found
+libpango_debian_x86.so	x86	mprotect_x86.txt	False	0.1767	0.7104	not-found
+libpango_debian_x86.so	x86	syscall_exec_x86.txt	False	0.6813	0.7104	not-found
+libpcre2_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	1.0568	0.7958	not-found
+libpcre2_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	1.3875	0.7958	not-found
+libpcre2_debian_amd64.so	x86-64	mprotect_amd64.txt	False	8.6399	0.2992	not-found
+libpcre2_debian_amd64.so	x86-64	syscall_exec_amd64.txt	False	8.9291	0.2992	not-found
+libpcre2_debian_amd64.so	x86-64	turing_amd64.txt	False	1.0231	0.2992	not-found
+libpcre2_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	0.7399	0.4322	not-found
+libpcre2_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	0.8154	0.4322	not-found
+libpcre2_debian_x86.so	x86	mprotect_x86.txt	True	0.1793	0.3936	found
+libpcre2_debian_x86.so	x86	syscall_exec_x86.txt	True	0.6129	0.3936	found
+libphp_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	7.3977	7.4147	not-found
+libphp_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	8.2353	7.4147	not-found
+libphp_debian_amd64.so	x86-64	mprotect_amd64.txt	True	0.275	4.7931	found
+libphp_debian_amd64.so	x86-64	syscall_exec_amd64.txt	True	0.7925	4.7931	found
+libphp_debian_amd64.so	x86-64	turing_amd64.txt	False	2.6276	4.7931	not-found
+libphp_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	8.2542	8.078	not-found
+libphp_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	8.369	8.078	not-found
+libphp_debian_x86.so	x86	mprotect_x86.txt	True	0.2743	5.7538	found
+libphp_debian_x86.so	x86	syscall_exec_x86.txt	True	1.1348	5.7538	found
+libpng16_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	0.4945	0.3523	not-found
+libpng16_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	0.8071	0.3523	not-found
+libpng16_debian_amd64.so	x86-64	mprotect_amd64.txt	False	0.1746	0.3037	not-found
+libpng16_debian_amd64.so	x86-64	syscall_exec_amd64.txt	False	0.4531	0.3037	not-found
+libpng16_debian_amd64.so	x86-64	turing_amd64.txt	False	1.0089	0.3037	not-found
+libpng16_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	0.6959	0.4377	not-found
+libpng16_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	0.7538	0.4377	not-found
+libpng16_debian_x86.so	x86	mprotect_x86.txt	False	0.1741	0.3962	not-found
+libpng16_debian_x86.so	x86	syscall_exec_x86.txt	False	0.601	0.3962	not-found
+libpython3_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	7.2315	7.313	not-found
+libpython3_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	8.0953	7.313	not-found
+libpython3_debian_amd64.so	x86-64	mprotect_amd64.txt	True	0.3154	5.7036	found
+libpython3_debian_amd64.so	x86-64	syscall_exec_amd64.txt	True	0.8096	5.7036	found
+libpython3_debian_amd64.so	x86-64	turing_amd64.txt	False	2.6602	5.7036	not-found
+libpython3_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	7.1791	7.2122	not-found
+libpython3_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	6.9239	7.2122	not-found
+libpython3_debian_x86.so	x86	mprotect_x86.txt	True	0.2414	6.8804	found
+libpython3_debian_x86.so	x86	syscall_exec_x86.txt	True	0.908	6.8804	found
+libreadline_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	0.5791	0.5126	not-found
+libreadline_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	0.9113	0.5126	not-found
+libreadline_debian_amd64.so	x86-64	mprotect_amd64.txt	False	3.71	0.3853	not-found
+libreadline_debian_amd64.so	x86-64	syscall_exec_amd64.txt	False	3.959	0.3853	not-found
+libreadline_debian_amd64.so	x86-64	turing_amd64.txt	False	1.0245	0.3853	not-found
+libreadline_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	0.8069	0.4818	not-found
+libreadline_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	0.8809	0.4818	not-found
+libreadline_debian_x86.so	x86	mprotect_x86.txt	False	0.1734	0.491	not-found
+libreadline_debian_x86.so	x86	syscall_exec_x86.txt	False	0.6214	0.491	not-found
+libsqlite3_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	2.7857	2.5676	not-found
+libsqlite3_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	3.1961	2.5676	not-found
+libsqlite3_debian_amd64.so	x86-64	mprotect_amd64.txt	True	0.2649	1.9897	found
+libsqlite3_debian_amd64.so	x86-64	syscall_exec_amd64.txt	True	0.6711	1.9897	found
+libsqlite3_debian_amd64.so	x86-64	turing_amd64.txt	False	1.6778	1.9897	not-found
+libsqlite3_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	2.8124	2.5204	not-found
+libsqlite3_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	2.9147	2.5204	not-found
+libsqlite3_debian_x86.so	x86	mprotect_x86.txt	True	0.2193	2.4332	found
+libsqlite3_debian_x86.so	x86	syscall_exec_x86.txt	True	0.8624	2.4332	found
+libssh2_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	0.5534	0.4164	not-found
+libssh2_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	0.8939	0.4164	not-found
+libssh2_debian_amd64.so	x86-64	mprotect_amd64.txt	False	3.6308	0.2849	not-found
+libssh2_debian_amd64.so	x86-64	syscall_exec_amd64.txt	False	3.8829	0.2849	not-found
+libssh2_debian_amd64.so	x86-64	turing_amd64.txt	False	0.9697	0.2849	not-found
+libssh2_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	0.8313	0.4161	not-found
+libssh2_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	0.9316	0.4161	not-found
+libssh2_debian_x86.so	x86	mprotect_x86.txt	True	0.1741	0.3408	found
+libssh2_debian_x86.so	x86	syscall_exec_x86.txt	True	0.6005	0.3408	found
+libssl_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	1.1265	0.8927	not-found
+libssl_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	1.4785	0.8927	not-found
+libssl_debian_amd64.so	x86-64	mprotect_amd64.txt	True	0.182	0.8722	found
+libssl_debian_amd64.so	x86-64	syscall_exec_amd64.txt	True	0.4738	0.8722	found
+libssl_debian_amd64.so	x86-64	turing_amd64.txt	False	1.0948	0.8722	not-found
+libssl_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	1.6663	1.0596	not-found
+libssl_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	1.6523	1.0596	not-found
+libssl_debian_x86.so	x86	mprotect_x86.txt	False	0.182	1.0745	not-found
+libssl_debian_x86.so	x86	syscall_exec_x86.txt	False	0.6429	1.0745	not-found
+libstdc++_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	2.7323	2.9261	not-found
+libstdc++_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	3.357	2.9261	not-found
+libstdc++_debian_amd64.so	x86-64	mprotect_amd64.txt	True	0.3033	2.2923	found
+libstdc++_debian_amd64.so	x86-64	syscall_exec_amd64.txt	True	0.5795	2.2923	found
+libstdc++_debian_amd64.so	x86-64	turing_amd64.txt	False	1.4889	2.2923	not-found
+libstdc++_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	3.9925	3.0053	not-found
+libstdc++_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	4.7263	3.0053	not-found
+libstdc++_debian_x86.so	x86	mprotect_x86.txt	True	0.2143	3.141	found
+libstdc++_debian_x86.so	x86	syscall_exec_x86.txt	True	0.8126	3.141	found
+libsudo_util_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	0.3384	0.2021	not-found
+libsudo_util_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	0.6456	0.2021	not-found
+libsudo_util_debian_amd64.so	x86-64	mprotect_amd64.txt	False	1.6553	0.1529	not-found
+libsudo_util_debian_amd64.so	x86-64	syscall_exec_amd64.txt	False	1.9068	0.1529	not-found
+libsudo_util_debian_amd64.so	x86-64	turing_amd64.txt	False	1.0359	0.1529	not-found
+libsudo_util_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	0.511	0.207	not-found
+libsudo_util_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	0.5935	0.207	not-found
+libsudo_util_debian_x86.so	x86	mprotect_x86.txt	False	0.1697	0.1731	not-found
+libsudo_util_debian_x86.so	x86	syscall_exec_x86.txt	False	0.5632	0.1731	not-found
+libsystemd_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	1.5045	1.4282	not-found
+libsystemd_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	1.8501	1.4282	not-found
+libsystemd_debian_amd64.so	x86-64	mprotect_amd64.txt	True	0.1938	1.0058	found
+libsystemd_debian_amd64.so	x86-64	syscall_exec_amd64.txt	True	0.5095	1.0058	found
+libsystemd_debian_amd64.so	x86-64	turing_amd64.txt	False	1.1778	1.0058	not-found
+libsystemd_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	1.8954	1.449	not-found
+libsystemd_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	1.9394	1.449	not-found
+libsystemd_debian_x86.so	x86	mprotect_x86.txt	False	0.1879	1.1648	not-found
+libsystemd_debian_x86.so	x86	syscall_exec_x86.txt	False	0.6585	1.1648	not-found
+libtiff_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	0.8153	0.6952	not-found
+libtiff_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	1.1398	0.6952	not-found
+libtiff_debian_amd64.so	x86-64	mprotect_amd64.txt	True	0.1802	0.4784	found
+libtiff_debian_amd64.so	x86-64	syscall_exec_amd64.txt	True	0.4675	0.4784	found
+libtiff_debian_amd64.so	x86-64	turing_amd64.txt	False	1.0813	0.4784	not-found
+libtiff_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	0.9795	0.6874	not-found
+libtiff_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	1.0567	0.6874	not-found
+libtiff_debian_x86.so	x86	mprotect_x86.txt	False	0.1755	0.6246	not-found
+libtiff_debian_x86.so	x86	syscall_exec_x86.txt	False	0.6157	0.6246	not-found
+libtinfo_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	0.2879	0.1801	not-found
+libtinfo_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	0.5911	0.1801	not-found
+libtinfo_debian_amd64.so	x86-64	mprotect_amd64.txt	False	1.5967	0.1446	not-found
+libtinfo_debian_amd64.so	x86-64	syscall_exec_amd64.txt	False	1.8547	0.1446	not-found
+libtinfo_debian_amd64.so	x86-64	turing_amd64.txt	False	0.9186	0.1446	not-found
+libtinfo_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	0.4492	0.19	not-found
+libtinfo_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	0.5282	0.19	not-found
+libtinfo_debian_x86.so	x86	mprotect_x86.txt	False	0.1712	0.2093	not-found
+libtinfo_debian_x86.so	x86	syscall_exec_x86.txt	False	0.5701	0.2093	not-found
+libudev_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	0.4459	0.3457	not-found
+libudev_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	0.7643	0.3457	not-found
+libudev_debian_amd64.so	x86-64	mprotect_amd64.txt	False	2.5903	0.2414	not-found
+libudev_debian_amd64.so	x86-64	syscall_exec_amd64.txt	False	2.8871	0.2414	not-found
+libudev_debian_amd64.so	x86-64	turing_amd64.txt	False	0.9875	0.2414	not-found
+libudev_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	0.6454	0.3437	not-found
+libudev_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	0.7245	0.3437	not-found
+libudev_debian_x86.so	x86	mprotect_x86.txt	False	0.1773	0.3034	not-found
+libudev_debian_x86.so	x86	syscall_exec_x86.txt	False	0.6124	0.3034	not-found
+libvlccore_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	1.8221	1.5508	not-found
+libvlccore_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	2.248	1.5508	not-found
+libvlccore_debian_amd64.so	x86-64	mprotect_amd64.txt	True	0.2309	1.0614	found
+libvlccore_debian_amd64.so	x86-64	syscall_exec_amd64.txt	True	0.5621	1.0614	found
+libvlccore_debian_amd64.so	x86-64	turing_amd64.txt	False	1.2895	1.0614	not-found
+libvlccore_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	2.1957	1.5317	not-found
+libvlccore_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	2.1025	1.5317	not-found
+libvlccore_debian_x86.so	x86	mprotect_x86.txt	True	0.1954	1.3535	found
+libvlccore_debian_x86.so	x86	syscall_exec_x86.txt	True	0.6761	1.3535	found
+libwebkit2gtk_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	108.0999	111.3884	not-found
+libwebkit2gtk_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	111.6544	111.3884	not-found
+libwebkit2gtk_debian_amd64.so	x86-64	mprotect_amd64.txt	True	1.4742	86.7058	found
+libwebkit2gtk_debian_amd64.so	x86-64	syscall_exec_amd64.txt	True	4.2213	86.7058	found
+libwebkit2gtk_debian_amd64.so	x86-64	turing_amd64.txt	False	18.3956	86.7058	not-found
+libwebkit2gtk_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	104.8582	125.2725	not-found
+libwebkit2gtk_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	110.5821	125.2725	not-found
+libwebkit2gtk_debian_x86.so	x86	mprotect_x86.txt	True	1.1703	103.4878	found
+libwebkit2gtk_debian_x86.so	x86	syscall_exec_x86.txt	True	5.0812	103.4878	found
+libwebp_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	0.745	0.6281	not-found
+libwebp_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	1.0764	0.6281	not-found
+libwebp_debian_amd64.so	x86-64	mprotect_amd64.txt	True	0.2391	0.6067	found
+libwebp_debian_amd64.so	x86-64	syscall_exec_amd64.txt	True	0.5028	0.6067	found
+libwebp_debian_amd64.so	x86-64	turing_amd64.txt	False	1.1302	0.6067	not-found
+libwebp_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	1.0006	0.6579	not-found
+libwebp_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	1.0567	0.6579	not-found
+libwebp_debian_x86.so	x86	mprotect_x86.txt	True	0.1908	0.8878	found
+libwebp_debian_x86.so	x86	syscall_exec_x86.txt	True	0.686	0.8878	found
+libwireshark_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	56.8724	48.9571	not-found
+libwireshark_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	57.908	48.9571	not-found
+libwireshark_debian_amd64.so	x86-64	mprotect_amd64.txt	True	0.6357	38.5703	found
+libwireshark_debian_amd64.so	x86-64	syscall_exec_amd64.txt	True	1.9298	38.5703	found
+libwireshark_debian_amd64.so	x86-64	turing_amd64.txt	False	7.661	38.5703	not-found
+libwireshark_debian_x86.so	x86	mprotect_x86.txt	True	0.7416	60.7713	found
+libwireshark_debian_x86.so	x86	syscall_exec_x86.txt	True	3.3068	60.7713	found
+libxml2_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	2.9363	2.7457	not-found
+libxml2_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	3.4471	2.7457	not-found
+libxml2_debian_amd64.so	x86-64	mprotect_amd64.txt	True	0.2249	2.1042	found
+libxml2_debian_amd64.so	x86-64	syscall_exec_amd64.txt	True	0.5894	2.1042	found
+libxml2_debian_amd64.so	x86-64	turing_amd64.txt	False	1.6135	2.1042	not-found
+libxml2_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	3.0744	2.7526	not-found
+libxml2_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	3.2456	2.7526	not-found
+libxml2_debian_x86.so	x86	mprotect_x86.txt	True	0.2453	2.258	found
+libxml2_debian_x86.so	x86	syscall_exec_x86.txt	True	0.9869	2.258	found
+libxul_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	221.9496	219.634	not-found
+libxul_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	232.6126	219.634	not-found
+libxul_debian_amd64.so	x86-64	mprotect_amd64.txt	True	2.2367	154.9135	found
+libxul_debian_amd64.so	x86-64	syscall_exec_amd64.txt	True	6.5361	154.9135	found
+libxul_debian_amd64.so	x86-64	turing_amd64.txt	True	27.0629	154.9135	found
+libxul_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	211.1729	223.2441	not-found
+libxul_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	226.0064	223.2441	not-found
+libxul_debian_x86.so	x86	mprotect_x86.txt	True	1.9655	183.9283	found
+libxul_debian_x86.so	x86	syscall_exec_x86.txt	True	9.0521	183.9283	found
+libz_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	0.2811	0.1716	not-found
+libz_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	0.5825	0.1716	not-found
+libz_debian_amd64.so	x86-64	mprotect_amd64.txt	False	1.6382	0.1106	not-found
+libz_debian_amd64.so	x86-64	syscall_exec_amd64.txt	False	1.893	0.1106	not-found
+libz_debian_amd64.so	x86-64	turing_amd64.txt	False	0.8636	0.1106	not-found
+libz_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	0.432	0.1632	not-found
+libz_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	0.5064	0.1632	not-found
+libz_debian_x86.so	x86	mprotect_x86.txt	False	0.1711	0.1465	not-found
+libz_debian_x86.so	x86	syscall_exec_x86.txt	False	0.5748	0.1465	not-found
+libzstd_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	1.3844	1.2305	not-found
+libzstd_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	1.7143	1.2305	not-found
+libzstd_debian_amd64.so	x86-64	mprotect_amd64.txt	False	13.9088	0.727	not-found
+libzstd_debian_amd64.so	x86-64	syscall_exec_amd64.txt	False	14.0485	0.727	not-found
+libzstd_debian_amd64.so	x86-64	turing_amd64.txt	False	1.1481	0.727	not-found
+libzstd_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	2.3093	1.7197	not-found
+libzstd_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	2.6182	1.7197	not-found
+libzstd_debian_x86.so	x86	mprotect_x86.txt	True	0.1855	0.9495	found
+libzstd_debian_x86.so	x86	syscall_exec_x86.txt	True	0.6362	0.9495	found
+sudoers_debian_aarch64.so	AArch64 (ARM64)	mprotect_aarch64.txt	False	1.2701	0.912	not-found
+sudoers_debian_aarch64.so	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	1.5948	0.912	not-found
+sudoers_debian_amd64.so	x86-64	mprotect_amd64.txt	True	0.1806	0.51	found
+sudoers_debian_amd64.so	x86-64	syscall_exec_amd64.txt	True	0.4563	0.51	found
+sudoers_debian_amd64.so	x86-64	turing_amd64.txt	False	0.9812	0.51	not-found
+sudoers_debian_riscv.so	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	1.3092	0.7891	not-found
+sudoers_debian_riscv.so	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	1.4382	0.7891	not-found
+sudoers_debian_x86.so	x86	mprotect_x86.txt	False	0.1742	0.6016	not-found
+sudoers_debian_x86.so	x86	syscall_exec_x86.txt	False	0.6065	0.6016	not-found
+zlib1g_aarch64_libz.so.1	AArch64 (ARM64)	mprotect_aarch64.txt	False	0.2818	0.173	not-found
+zlib1g_aarch64_libz.so.1	AArch64 (ARM64)	syscall_exec_aarch64.txt	False	0.6054	0.173	not-found
+zlib1g_amd64_libz.so.1	x86-64	mprotect_amd64.txt	False	1.6004	0.1037	not-found
+zlib1g_amd64_libz.so.1	x86-64	syscall_exec_amd64.txt	False	1.8769	0.1037	not-found
+zlib1g_amd64_libz.so.1	x86-64	turing_amd64.txt	False	0.8556	0.1037	not-found
+zlib1g_riscv_libz.so.1	RISC-V RV64 (compressed)	mprotect_riscv.txt	False	0.4288	0.1663	not-found
+zlib1g_riscv_libz.so.1	RISC-V RV64 (compressed)	syscall_exec_riscv.txt	False	0.5076	0.1663	not-found
+zlib1g_x86_libz.so.1	x86	mprotect_x86.txt	False	0.1717	0.1579	not-found
+zlib1g_x86_libz.so.1	x86	syscall_exec_x86.txt	False	0.5765	0.1579	not-found
